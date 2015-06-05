@@ -103,7 +103,7 @@ abstract public class MongoEmbedder {
     }
 
     public DBObject embed(String collectionName, Object resource , String embedDesc, String includeDesc) {
-        return embed(collectionName, resource, (Map)JSON.parse(embedDesc), (BasicDBObject)JSON.parse(includeDesc));
+        return embed(collectionName, resource, (Map)JSON.parse(embedDesc), (Map)JSON.parse(includeDesc));
     }
 
 
@@ -120,7 +120,7 @@ abstract public class MongoEmbedder {
     }
 
     public DBObject embed(Object resource , String embedDesc, String includeDesc) {
-        return embed(null, resource, (Map)JSON.parse(embedDesc), (BasicDBObject)JSON.parse(includeDesc));
+        return embed(null, resource, (Map)JSON.parse(embedDesc), (Map)JSON.parse(includeDesc));
     }
 
 
@@ -178,6 +178,13 @@ abstract public class MongoEmbedder {
         return emptyDBObject;
     }
 
+    private Map cutDesc(Map desc, Object key) {
+        if(desc.get(key) instanceof Map){
+            return (Map)desc.get(key);
+        }
+        return emptyDBObject;
+    }
+
     private DBObject embedWithColl(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
         try {
             if (resource == null) {
@@ -196,7 +203,7 @@ abstract public class MongoEmbedder {
 
     private DBObject embedObjectType(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
         DBObject item = findOneWithCache(dbId, coll, new BasicDBObject("_id", resource), buildDesc(includeDesc), findOneCache);
-        return embedWithColl(dbId, coll, item, buildDesc(embedDesc), buildDesc(includeDesc), findOneCache, findCache);
+        return embedWithColl(dbId, coll, item, embedDesc, includeDesc, findOneCache, findCache);
     }
 
     private DBObject embedMapType(String dbId, Map resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
@@ -205,7 +212,7 @@ abstract public class MongoEmbedder {
             .filter(key -> resource.containsKey(key))
             .forEach(key -> {
                 try {
-                    tmp.put(key, embedWithColl(dbId, dbMap.get(dbId).getCollection(key.toString()), resource.get(key), buildDesc(embedDesc.get(key)), buildDesc(includeDesc.get(key)), findOneCache, findCache));
+                    tmp.put(key, embedWithColl(dbId, dbMap.get(dbId).getCollection(key.toString()), resource.get(key), cutDesc(embedDesc, key), cutDesc(includeDesc, key), findOneCache, findCache));
                 } catch (Throwable ex) { }
             });
         BasicDBObject result = new BasicDBObject(resource);

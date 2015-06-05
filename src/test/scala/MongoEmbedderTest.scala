@@ -14,6 +14,7 @@ import com.ehanlin.mde.MongoEmbedder
 class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2"""
   check mock data                             $checkMockData
   test basic embed                            $testBasicEmbed
+  test basic embed include                    $testBasicEmbedInclude
 """
 
   val port = 12345
@@ -34,6 +35,14 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
     val list : java.util.List[String] = List("video_PC_1_1", "video_PC_2_1", "video_PC_2_2", "video_PC_3_1")
     val embedList = MongoEmbedder.instance.embed("video", list, """{"subject":true,unit:true}""").asInstanceOf[BasicDBList]
     embedList.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : "PC" , "name" : "第一課" , "order" : 1}]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_1" , "order" : 2 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : "PC" , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_2" , "order" : 3 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : "PC" , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : "PC" , "name" : "第一課" , "order" : 1} , { "_id" : "unit_PC_2" , "subject" : "PC" , "name" : "第二課" , "order" : 2} , { "_id" : "unit_PC_3" , "subject" : "PC" , "name" : "第三課" , "order" : 3}]}]"""
+  }
+
+  def testBasicEmbedInclude = {
+    val list : java.util.List[String] = List("video_PC_1_1", "video_PC_2_1", "video_PC_2_2", "video_PC_3_1")
+    val embedList = MongoEmbedder.instance.embed("video", list,
+      """{"subject":true,unit:true}""",
+      """{"name":true,"subject":{name:true},unit:{name:true}}""").asInstanceOf[BasicDBList]
+    embedList.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_1_1" , "unit" : [ { "_id" : "unit_PC_1" , "name" : "第一課"}]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_2_1" , "unit" : [ { "_id" : "unit_PC_2" , "name" : "第二課"}]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_2_2" , "unit" : [ { "_id" : "unit_PC_2" , "name" : "第二課"}]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_3_1" , "unit" : [ { "_id" : "unit_PC_1" , "name" : "第一課"} , { "_id" : "unit_PC_2" , "name" : "第二課"} , { "_id" : "unit_PC_3" , "name" : "第三課"}]}]"""
   }
 
 
