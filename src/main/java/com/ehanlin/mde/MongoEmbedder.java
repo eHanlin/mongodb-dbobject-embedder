@@ -89,21 +89,16 @@ abstract public class MongoEmbedder {
         }
     }
 
-
-    public DBObject embed(String collectionName, Object resource , Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
-        return embed(defaultMongoDatabaseId, collectionName, resource, embedDesc, includeDesc, findOneCache, findCache);
+    public DBObject embed(String dbId, String collectionName, Object resource , Map embedDesc, Map includeDesc) {
+        return embed(dbId, collectionName, resource, embedDesc, includeDesc, new ConcurrentHashMap(), new ConcurrentHashMap());
     }
 
-    public DBObject embed(String collectionName, Object resource , Map embedDesc, Map includeDesc) {
-        return embed(defaultMongoDatabaseId, collectionName, resource, embedDesc, includeDesc, new ConcurrentHashMap(), new ConcurrentHashMap());
+    public DBObject embed(String dbId, String collectionName, Object resource , String embedDesc) {
+        return embed(dbId, collectionName, resource, (Map)JSON.parse(embedDesc), emptyDBObject);
     }
 
-    public DBObject embed(String collectionName, Object resource , String embedDesc) {
-        return embed(collectionName, resource, (Map)JSON.parse(embedDesc), emptyDBObject);
-    }
-
-    public DBObject embed(String collectionName, Object resource , String embedDesc, String includeDesc) {
-        return embed(collectionName, resource, (Map)JSON.parse(embedDesc), (Map)JSON.parse(includeDesc));
+    public DBObject embed(String dbId, String collectionName, Object resource , String embedDesc, String includeDesc) {
+        return embed(dbId, collectionName, resource, (Map)JSON.parse(embedDesc), (Map)JSON.parse(includeDesc));
     }
 
 
@@ -116,11 +111,11 @@ abstract public class MongoEmbedder {
     }
 
     public DBObject embed(Object resource , String embedDesc) {
-        return embed(null, resource, (Map)JSON.parse(embedDesc), emptyDBObject);
+        return embed(defaultMongoDatabaseId, null, resource, (Map)JSON.parse(embedDesc), emptyDBObject);
     }
 
     public DBObject embed(Object resource , String embedDesc, String includeDesc) {
-        return embed(null, resource, (Map)JSON.parse(embedDesc), (Map)JSON.parse(includeDesc));
+        return embed(defaultMongoDatabaseId, null, resource, (Map)JSON.parse(embedDesc), (Map)JSON.parse(includeDesc));
     }
 
 
@@ -185,6 +180,12 @@ abstract public class MongoEmbedder {
         return emptyDBObject;
     }
 
+    private DBCollection getEmbedColl(String dbId, Object collectionName,  Map embed) {
+        String itemDbId = (embed.containsKey(fieldDbCode)) ? embed.get(fieldDbCode).toString() : dbId;
+        String itemCollectionName = (embed.containsKey(fieldCollectionCode)) ? embed.get(fieldCollectionCode).toString() : collectionName.toString();
+        return dbMap.get(itemDbId).getCollection(itemCollectionName);
+    }
+
     private DBObject embedWithColl(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
         try {
             if (resource == null) {
@@ -212,7 +213,9 @@ abstract public class MongoEmbedder {
             .filter(key -> resource.containsKey(key))
             .forEach(key -> {
                 try {
-                    tmp.put(key, embedWithColl(dbId, dbMap.get(dbId).getCollection(key.toString()), resource.get(key), cutDesc(embedDesc, key), cutDesc(includeDesc, key), findOneCache, findCache));
+                    Map itemEmbedDesc = cutDesc(embedDesc, key);
+                    DBCollection itemEmbedColl = getEmbedColl(dbId, key, itemEmbedDesc);
+                    tmp.put(key, embedWithColl(dbId, itemEmbedColl, resource.get(key), itemEmbedDesc, cutDesc(includeDesc, key), findOneCache, findCache));
                 } catch (Throwable ex) { }
             });
         BasicDBObject result = new BasicDBObject(resource);
