@@ -4,8 +4,11 @@ import com.mongodb.*;
 import com.mongodb.util.JSON;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 
 abstract public class MongoEmbedder {
@@ -124,6 +127,9 @@ abstract public class MongoEmbedder {
     static private final String fieldDbCode = "_db";
     static private final String fieldCollectionCode = "_coll";
     static private final String fieldQueryCode = "_query";
+    static private final String fielAggregatCode = "_aggregat";
+    static private final Pattern fieldQuerySelfCodePattern = Pattern.compile("^@(\\[.+\\])+$");
+    static private final Pattern fieldQueryKeyCodePattern = Pattern.compile("\\[(.+?)\\]");
     static private final String magicDelimiterCode = "__";
 
     static private final String defaultMongoDatabaseId = "_default";
@@ -186,17 +192,58 @@ abstract public class MongoEmbedder {
         return dbMap.get(itemDbId).getCollection(itemCollectionName);
     }
 
+    private Object getQueryValue(Object resource, Matcher keyMatcher) {
+        if(keyMatcher.find()){
+            String key = keyMatcher.group(1);
+            if(resource instanceof Map){
+                return getQueryValue(((Map)resource).get(key), keyMatcher);
+            }
+            if(resource instanceof List){
+                return getQueryValue(((List) resource).get(Integer.parseInt(key)), keyMatcher);
+            }
+        }
+        return resource;
+    }
+
+    private Object evalQueryValue(Map resource, Object value) {
+        if(value instanceof String) {
+            Matcher matcher = fieldQuerySelfCodePattern.matcher((String)value);
+            if(matcher.matches()){
+                return getQueryValue(resource, fieldQueryKeyCodePattern.matcher(matcher.group(1)));
+            }
+            return value;
+        }
+        if(value instanceof Map) {
+            BasicDBObject result = new BasicDBObject((Map)value);
+            result.forEach((k, v) -> result.append(k, evalQueryValue(resource, v)));
+            return result;
+        }
+        if(value instanceof Iterable) {
+            BasicDBList result = new BasicDBList();
+            ((Iterable) value).forEach(v -> result.add(evalQueryValue(resource, v)));
+            return result;
+        }
+        return value;
+    }
+
+    private BasicDBObject getEmbedQuery(Map resource, Map embed) {
+        if(!embed.containsKey(fieldQueryCode))
+            return null;
+        return (BasicDBObject)evalQueryValue(resource, embed.get(fieldQueryCode));
+    }
+
     private DBObject embedWithColl(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
         try {
             if (resource == null) {
                 return null;
-            } else if (resource instanceof Map) {
-                return embedMapType(dbId, (Map) resource, embedDesc, includeDesc, findOneCache, findCache);
-            } else if (resource instanceof Iterable) {
-                return embedIterableType(dbId, coll, (Iterable) resource, embedDesc, includeDesc, findOneCache, findCache);
-            } else {
-                return embedObjectType(dbId, coll, resource, embedDesc, includeDesc, findOneCache, findCache);
             }
+            if (resource instanceof Map) {
+                return embedMapType(dbId, (Map) resource, embedDesc, includeDesc, findOneCache, findCache);
+            }
+            if (resource instanceof Iterable) {
+                return embedIterableType(dbId, coll, (Iterable) resource, embedDesc, includeDesc, findOneCache, findCache);
+            }
+            return embedObjectType(dbId, coll, resource, embedDesc, includeDesc, findOneCache, findCache);
         } catch (Throwable ex){
             return null;
         }
@@ -210,13 +257,30 @@ abstract public class MongoEmbedder {
     private DBObject embedMapType(String dbId, Map resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
         Map tmp = createTmpMap();
         StreamSupport.stream(embedDesc.keySet().spliterator(), isParallel())
-            .filter(key -> resource.containsKey(key))
+            .filter(key -> {
+                if (resource.containsKey(key)) {
+                    return true;
+                }
+                Map itemEmbedDesc = cutDesc(embedDesc, key);
+                if (!itemEmbedDesc.isEmpty() && itemEmbedDesc.containsKey(fieldQueryCode)) {
+                    return true;
+                }
+                return false;
+            })
             .forEach(key -> {
                 try {
                     Map itemEmbedDesc = cutDesc(embedDesc, key);
+                    Map itemIncludeDesc = cutDesc(includeDesc, key);
                     DBCollection itemEmbedColl = getEmbedColl(dbId, key, itemEmbedDesc);
-                    tmp.put(key, embedWithColl(dbId, itemEmbedColl, resource.get(key), itemEmbedDesc, cutDesc(includeDesc, key), findOneCache, findCache));
-                } catch (Throwable ex) { }
+                    BasicDBObject embedQuery = getEmbedQuery(resource, itemEmbedDesc);
+                    if (embedQuery != null) {
+                        BasicDBList list = findWithCache(dbId, itemEmbedColl, embedQuery, buildDesc(itemIncludeDesc), findCache);
+                        tmp.put(key, embedWithColl(dbId, itemEmbedColl, list, itemEmbedDesc, itemIncludeDesc, findOneCache, findCache));
+                    } else {
+                        tmp.put(key, embedWithColl(dbId, itemEmbedColl, resource.get(key), itemEmbedDesc, cutDesc(includeDesc, key), findOneCache, findCache));
+                    }
+                } catch (Throwable ex) {
+                }
             });
         BasicDBObject result = new BasicDBObject(resource);
         result.putAll(tmp);
