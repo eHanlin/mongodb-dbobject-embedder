@@ -18,6 +18,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
   test _db and _coll embed                    $testCrossEmbed
   test _find embed                            $testFindEmbed
   test _findOne embed                         $testFindOneEmbed
+  test _count embed                           $testCountEmbed
 """
 
   val port = 12345
@@ -79,6 +80,13 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
         "embedSubject":{"_coll":"subject","_findOne":{"code":"@[subject]"}}}""",
       """{"subject":{"name":true}}""")
     embedList.toString must_== """[ { "_id" : "unit_PC_5" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}} , { "_id" : "unit_EN_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "name" : "英語"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語"}} , { "_id" : "unit_EN_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "name" : "英語"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語"}} , { "_id" : "unit_MA_5" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "name" : "數學"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學"}} , { "_id" : "unit_NA_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "name" : "自然"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "code" : "NA" , "name" : "自然"}} , { "_id" : "unit_SO_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be434"} , "name" : "社會"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be434"} , "code" : "SO" , "name" : "社會"}}]"""
+  }
+
+  def testCountEmbed = {
+    val list : java.util.List[ObjectId] = List(new ObjectId("55711d2ad6a23e26b37be430"),new ObjectId("55711d2ad6a23e26b37be431"), new ObjectId("55711d2ad6a23e26b37be432"), new ObjectId("55711d2ad6a23e26b37be433"))
+    val embedList = MongoEmbedder.instance.embed("info", "subject", list,
+      """{"unitCount":{"_coll":"unit","_count":{"subject":"@[code]"}}}""")
+    embedList.toString must_== """[ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文" , "unitCount" : 5} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語" , "unitCount" : 5} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學" , "unitCount" : 5} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "code" : "NA" , "name" : "自然" , "unitCount" : 2}]"""
   }
 
   def beforeAll(): Unit = {

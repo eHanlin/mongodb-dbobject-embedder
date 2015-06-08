@@ -83,19 +83,19 @@ abstract public class MongoEmbedder {
     }
 
 
-    public DBObject embed(String dbId, String collectionName, Object resource , Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
+    public DBObject embed(String dbId, String collectionName, Object resource , Map embedDesc, Map includeDesc, Map<String, Object> cache) {
         try{
             if(collectionName == null){
-                return embedWithColl(dbId, null, resource, embedDesc, includeDesc, findOneCache, findCache);
+                return embedWithColl(dbId, null, resource, embedDesc, includeDesc, cache);
             }
-            return embedWithColl(dbId, dbMap.get(dbId).getCollection(collectionName), resource, embedDesc, includeDesc, findOneCache, findCache);
+            return embedWithColl(dbId, dbMap.get(dbId).getCollection(collectionName), resource, embedDesc, includeDesc, cache);
         }catch(Throwable ex){
             return null;
         }
     }
 
     public DBObject embed(String dbId, String collectionName, Object resource , Map embedDesc, Map includeDesc) {
-        return embed(dbId, collectionName, resource, embedDesc, includeDesc, new ConcurrentHashMap(), new ConcurrentHashMap());
+        return embed(dbId, collectionName, resource, embedDesc, includeDesc, new ConcurrentHashMap());
     }
 
     public DBObject embed(String dbId, String collectionName, Object resource , String embedDesc) {
@@ -107,12 +107,12 @@ abstract public class MongoEmbedder {
     }
 
 
-    public DBObject embed(Object resource , Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
-        return embed(defaultMongoDatabaseId, null, resource, embedDesc, includeDesc, findOneCache, findCache);
+    public DBObject embed(Object resource , Map embedDesc, Map includeDesc, Map<String, Object> cache) {
+        return embed(defaultMongoDatabaseId, null, resource, embedDesc, includeDesc, cache);
     }
 
     public DBObject embed(Object resource , Map embedDesc, Map includeDesc) {
-        return embed(defaultMongoDatabaseId, null, resource, embedDesc, includeDesc, new ConcurrentHashMap(), new ConcurrentHashMap());
+        return embed(defaultMongoDatabaseId, null, resource, embedDesc, includeDesc, new ConcurrentHashMap());
     }
 
     public DBObject embed(Object resource , String embedDesc) {
@@ -144,34 +144,47 @@ abstract public class MongoEmbedder {
 
     private final Map<String, DB> dbMap = new ConcurrentHashMap();
 
-    private BasicDBObject findOneWithCache(String dbId, DBCollection coll, BasicDBObject query, BasicDBObject fieldKeys, Map<String, BasicDBObject> cache) {
+    private BasicDBObject findOneWithCache(String dbId, DBCollection coll, BasicDBObject query, BasicDBObject fieldKeys, Map<String, Object> cache) {
         try{
-            String key = dbId+magicDelimiterCode+coll.getFullName()+magicDelimiterCode+query.toString()+magicDelimiterCode+fieldKeys.toString();
+            String key = fieldFindOneCode+magicDelimiterCode+dbId+magicDelimiterCode+coll.getFullName()+magicDelimiterCode+query.toString()+magicDelimiterCode+fieldKeys.toString();
             if(!cache.containsKey(key)){
                 BasicDBObject result = (BasicDBObject)coll.findOne(query, fieldKeys);
                 cache.put(key, result);
             }
             if(isDuplicateCache)
-                return (BasicDBObject)cache.get(key).copy();
+                return (BasicDBObject)((BasicDBObject)cache.get(key)).copy();
             else
-                return cache.get(key);
+                return (BasicDBObject)cache.get(key);
         }catch(Exception ex){
             return null;
         }
     }
 
-    private BasicDBList findWithCache(String dbId, DBCollection coll, BasicDBObject query, BasicDBObject fieldKeys, Map<String, BasicDBList> cache) {
+    private BasicDBList findWithCache(String dbId, DBCollection coll, BasicDBObject query, BasicDBObject fieldKeys, Map<String, Object> cache) {
         try{
-            String key = dbId+magicDelimiterCode+coll.getFullName()+magicDelimiterCode+query.toString()+magicDelimiterCode+fieldKeys.toString();
+            String key = fieldFindCode+magicDelimiterCode+dbId+magicDelimiterCode+coll.getFullName()+magicDelimiterCode+query.toString()+magicDelimiterCode+fieldKeys.toString();
             if(!cache.containsKey(key)){
                 BasicDBList list = new BasicDBList();
                 list.addAll(coll.find(query, fieldKeys).toArray());
                 cache.put(key, list);
             }
             if(isDuplicateCache)
-                return (BasicDBList)cache.get(key).copy();
+                return (BasicDBList)((BasicDBList)cache.get(key)).copy();
             else
-                return cache.get(key);
+                return (BasicDBList)cache.get(key);
+        }catch(Exception ex){
+            return null;
+        }
+    }
+
+    private Long countWithCache(String dbId, DBCollection coll, BasicDBObject query, Map<String, Object> cache) {
+        try{
+            String key = fieldCountCode+magicDelimiterCode+dbId+magicDelimiterCode+coll.getFullName()+magicDelimiterCode+query.toString();
+            if(!cache.containsKey(key)){
+                Long count = coll.count(query);
+                cache.put(key, count);
+            }
+            return (Long)cache.get(key);
         }catch(Exception ex){
             return null;
         }
@@ -233,26 +246,26 @@ abstract public class MongoEmbedder {
         return value;
     }
 
-    private DBObject embedWithColl(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
+    private DBObject embedWithColl(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, Object> cache) {
         try {
             if (resource == null) {
                 return null;
             }
             if (resource instanceof Map) {
-                return embedMapType(dbId, (Map) resource, embedDesc, includeDesc, findOneCache, findCache);
+                return embedMapType(dbId, (Map) resource, embedDesc, includeDesc, cache);
             }
             if (resource instanceof Iterable) {
-                return embedIterableType(dbId, coll, (Iterable) resource, embedDesc, includeDesc, findOneCache, findCache);
+                return embedIterableType(dbId, coll, (Iterable) resource, embedDesc, includeDesc, cache);
             }
-            return embedObjectType(dbId, coll, resource, embedDesc, includeDesc, findOneCache, findCache);
+            return embedObjectType(dbId, coll, resource, embedDesc, includeDesc, cache);
         } catch (Throwable ex){
             return null;
         }
     }
 
-    private DBObject embedObjectType(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
-        DBObject item = findOneWithCache(dbId, coll, new BasicDBObject("_id", resource), buildDesc(includeDesc), findOneCache);
-        return embedWithColl(dbId, coll, item, embedDesc, includeDesc, findOneCache, findCache);
+    private DBObject embedObjectType(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, Object> cache) {
+        DBObject item = findOneWithCache(dbId, coll, new BasicDBObject("_id", resource), buildDesc(includeDesc), cache);
+        return embedWithColl(dbId, coll, item, embedDesc, includeDesc, cache);
     }
 
     private String findReservedField(Map embed) {
@@ -267,23 +280,24 @@ abstract public class MongoEmbedder {
         return null;
     }
 
-    private DBObject _find_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
+    private DBObject _find_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, Object> cache) {
         BasicDBObject embedQuery = (BasicDBObject)evalQueryValue((Map)resource, embedDesc.get(fieldFindCode));
-        BasicDBList list = findWithCache(dbId, coll, embedQuery, buildDesc(includeDesc), findCache);
-        return embedWithColl(dbId, coll, list, embedDesc, includeDesc, findOneCache, findCache);
+        BasicDBList list = findWithCache(dbId, coll, embedQuery, buildDesc(includeDesc), cache);
+        return embedWithColl(dbId, coll, list, embedDesc, includeDesc, cache);
     }
 
-    private DBObject _findOne_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
+    private DBObject _findOne_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, Object> cache) {
         BasicDBObject embedQuery = (BasicDBObject)evalQueryValue((Map)resource, embedDesc.get(fieldFindOneCode));
-        BasicDBObject item = findOneWithCache(dbId, coll, embedQuery, buildDesc(includeDesc), findOneCache);
-        return embedWithColl(dbId, coll, item, embedDesc, includeDesc, findOneCache, findCache);
+        BasicDBObject item = findOneWithCache(dbId, coll, embedQuery, buildDesc(includeDesc), cache);
+        return embedWithColl(dbId, coll, item, embedDesc, includeDesc, cache);
     }
 
-    private DBObject _default_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
-        return embedWithColl(dbId, coll, resource, embedDesc, includeDesc, findOneCache, findCache);
+    private Long _count_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, Object> cache) {
+        BasicDBObject embedQuery = (BasicDBObject)evalQueryValue((Map)resource, embedDesc.get(fieldCountCode));
+        return countWithCache(dbId, coll, embedQuery, cache);
     }
 
-    private DBObject embedMapType(String dbId, Map resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
+    private DBObject embedMapType(String dbId, Map resource, Map embedDesc, Map includeDesc, Map<String, Object> cache) {
         Map tmp = createTmpMap();
         StreamSupport.stream(embedDesc.keySet().spliterator(), isParallel())
             .filter(key -> {
@@ -299,10 +313,10 @@ abstract public class MongoEmbedder {
                     DBCollection itemEmbedColl = getEmbedColl(dbId, key, itemEmbedDesc);
                     String eservedField = findReservedField(itemEmbedDesc);
                     if(eservedField != null) {
-                        Method task = MongoEmbedder.class.getDeclaredMethod(eservedField+"_task", String.class, DBCollection.class, Object.class, Map.class, Map.class, Map.class, Map.class);
-                        tmp.put(key, task.invoke(this, dbId, itemEmbedColl, resource, itemEmbedDesc, itemIncludeDesc, findOneCache, findCache));
+                        Method task = MongoEmbedder.class.getDeclaredMethod(eservedField+"_task", String.class, DBCollection.class, Object.class, Map.class, Map.class, Map.class);
+                        tmp.put(key, task.invoke(this, dbId, itemEmbedColl, resource, itemEmbedDesc, itemIncludeDesc, cache));
                     } else {
-                        tmp.put(key, embedWithColl(dbId, itemEmbedColl, resource.get(key), itemEmbedDesc, itemIncludeDesc, findOneCache, findCache));
+                        tmp.put(key, embedWithColl(dbId, itemEmbedColl, resource.get(key), itemEmbedDesc, itemIncludeDesc, cache));
                     }
                 } catch (Throwable ex) {
                 }
@@ -312,10 +326,10 @@ abstract public class MongoEmbedder {
         return result;
     }
 
-    private DBObject embedIterableType(String dbId, DBCollection coll, Iterable resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
+    private DBObject embedIterableType(String dbId, DBCollection coll, Iterable resource, Map embedDesc, Map includeDesc, Map<String, Object> cache) {
         BasicDBList list = new BasicDBList();
         for(Object item : resource){
-            list.add(embedWithColl(dbId, coll, item, embedDesc, includeDesc, findOneCache, findCache));
+            list.add(embedWithColl(dbId, coll, item, embedDesc, includeDesc, cache));
         }
         return list;
     }
