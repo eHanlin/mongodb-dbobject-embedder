@@ -3,6 +3,8 @@ package com.ehanlin.mde;
 import com.mongodb.*;
 import com.mongodb.util.JSON;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,10 +128,15 @@ abstract public class MongoEmbedder {
 
     static private final String fieldDbCode = "_db";
     static private final String fieldCollectionCode = "_coll";
-    static private final String fieldQueryCode = "_query";
-    static private final String fielAggregatCode = "_aggregat";
+    static private final String fieldFindCode = "_find";
+    static private final String fieldFindOneCode = "_findOne";
+    static private final String fieldDistinctCode = "_distinct";
+    static private final String fieldCountCode = "_count";
+    static private final String fieldAggregatCode = "_aggregate";
+    static private final List<String> reservedFields = Arrays.asList(fieldFindCode, fieldFindOneCode, fieldDistinctCode, fieldCountCode, fieldAggregatCode);
     static private final Pattern fieldQuerySelfCodePattern = Pattern.compile("^@(\\[.+\\])+$");
     static private final Pattern fieldQueryKeyCodePattern = Pattern.compile("\\[(.+?)\\]");
+    static private final String fieldQueryParentKeyCode = "..";
     static private final String magicDelimiterCode = "__";
 
     static private final String defaultMongoDatabaseId = "_default";
@@ -226,12 +233,6 @@ abstract public class MongoEmbedder {
         return value;
     }
 
-    private BasicDBObject getEmbedQuery(Map resource, Map embed) {
-        if(!embed.containsKey(fieldQueryCode))
-            return null;
-        return (BasicDBObject)evalQueryValue(resource, embed.get(fieldQueryCode));
-    }
-
     private DBObject embedWithColl(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
         try {
             if (resource == null) {
@@ -254,6 +255,34 @@ abstract public class MongoEmbedder {
         return embedWithColl(dbId, coll, item, embedDesc, includeDesc, findOneCache, findCache);
     }
 
+    private String findReservedField(Map embed) {
+        if(embed.isEmpty()) {
+            return null;
+        }
+        for(String reservedField : reservedFields) {
+            if(embed.containsKey(reservedField)) {
+                return reservedField;
+            }
+        }
+        return null;
+    }
+
+    private DBObject _find_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
+        BasicDBObject embedQuery = (BasicDBObject)evalQueryValue((Map)resource, embedDesc.get(fieldFindCode));
+        BasicDBList list = findWithCache(dbId, coll, embedQuery, buildDesc(includeDesc), findCache);
+        return embedWithColl(dbId, coll, list, embedDesc, includeDesc, findOneCache, findCache);
+    }
+
+    private DBObject _findOne_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
+        BasicDBObject embedQuery = (BasicDBObject)evalQueryValue((Map)resource, embedDesc.get(fieldFindOneCode));
+        BasicDBObject item = findOneWithCache(dbId, coll, embedQuery, buildDesc(includeDesc), findOneCache);
+        return embedWithColl(dbId, coll, item, embedDesc, includeDesc, findOneCache, findCache);
+    }
+
+    private DBObject _default_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
+        return embedWithColl(dbId, coll, resource, embedDesc, includeDesc, findOneCache, findCache);
+    }
+
     private DBObject embedMapType(String dbId, Map resource, Map embedDesc, Map includeDesc, Map<String, BasicDBObject> findOneCache, Map<String, BasicDBList> findCache) {
         Map tmp = createTmpMap();
         StreamSupport.stream(embedDesc.keySet().spliterator(), isParallel())
@@ -261,23 +290,19 @@ abstract public class MongoEmbedder {
                 if (resource.containsKey(key)) {
                     return true;
                 }
-                Map itemEmbedDesc = cutDesc(embedDesc, key);
-                if (!itemEmbedDesc.isEmpty() && itemEmbedDesc.containsKey(fieldQueryCode)) {
-                    return true;
-                }
-                return false;
+                return findReservedField(cutDesc(embedDesc, key)) != null;
             })
             .forEach(key -> {
                 try {
                     Map itemEmbedDesc = cutDesc(embedDesc, key);
                     Map itemIncludeDesc = cutDesc(includeDesc, key);
                     DBCollection itemEmbedColl = getEmbedColl(dbId, key, itemEmbedDesc);
-                    BasicDBObject embedQuery = getEmbedQuery(resource, itemEmbedDesc);
-                    if (embedQuery != null) {
-                        BasicDBList list = findWithCache(dbId, itemEmbedColl, embedQuery, buildDesc(itemIncludeDesc), findCache);
-                        tmp.put(key, embedWithColl(dbId, itemEmbedColl, list, itemEmbedDesc, itemIncludeDesc, findOneCache, findCache));
+                    String eservedField = findReservedField(itemEmbedDesc);
+                    if(eservedField != null) {
+                        Method task = MongoEmbedder.class.getDeclaredMethod(eservedField+"_task", String.class, DBCollection.class, Object.class, Map.class, Map.class, Map.class, Map.class);
+                        tmp.put(key, task.invoke(this, dbId, itemEmbedColl, resource, itemEmbedDesc, itemIncludeDesc, findOneCache, findCache));
                     } else {
-                        tmp.put(key, embedWithColl(dbId, itemEmbedColl, resource.get(key), itemEmbedDesc, cutDesc(includeDesc, key), findOneCache, findCache));
+                        tmp.put(key, embedWithColl(dbId, itemEmbedColl, resource.get(key), itemEmbedDesc, itemIncludeDesc, findOneCache, findCache));
                     }
                 } catch (Throwable ex) {
                 }
