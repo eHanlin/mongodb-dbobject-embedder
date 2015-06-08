@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 abstract public class MongoEmbedder {
@@ -190,6 +192,23 @@ abstract public class MongoEmbedder {
         }
     }
 
+    private BasicDBList aggregateWithCache(String dbId, DBCollection coll, BasicDBList pipelines, Map<String, Object> cache) {
+        try{
+            String key = fieldAggregatCode+magicDelimiterCode+dbId+magicDelimiterCode+coll.getFullName()+magicDelimiterCode+pipelines.toString();
+            if(!cache.containsKey(key)){
+                BasicDBList list = new BasicDBList();
+                coll.aggregate(pipelines.stream().map(pipeline -> (DBObject) pipeline).collect(Collectors.toList())).results().forEach(item -> list.add(item));
+                cache.put(key, list);
+            }
+            if(isDuplicateCache)
+                return (BasicDBList)((BasicDBList)cache.get(key)).copy();
+            else
+                return (BasicDBList)cache.get(key);
+        }catch(Exception ex){
+            return null;
+        }
+    }
+
     private BasicDBObject buildDesc(Object desc) {
         if(desc instanceof Map){
             BasicDBObject result = new BasicDBObject();
@@ -295,6 +314,14 @@ abstract public class MongoEmbedder {
     private Long _count_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, Object> cache) {
         BasicDBObject embedQuery = (BasicDBObject)evalQueryValue((Map)resource, embedDesc.get(fieldCountCode));
         return countWithCache(dbId, coll, embedQuery, cache);
+    }
+
+    private BasicDBList _aggregate_task(String dbId, DBCollection coll, Object resource, Map embedDesc, Map includeDesc, Map<String, Object> cache) {
+        BasicDBList pipelines = new BasicDBList();
+        for(Object pipeline : (BasicDBList)embedDesc.get(fieldAggregatCode)){
+            pipelines.add(evalQueryValue((Map) resource, pipeline));
+        }
+        return aggregateWithCache(dbId, coll, pipelines, cache);
     }
 
     private DBObject embedMapType(String dbId, Map resource, Map embedDesc, Map includeDesc, Map<String, Object> cache) {

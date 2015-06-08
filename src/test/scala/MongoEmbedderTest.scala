@@ -19,6 +19,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
   test _find embed                            $testFindEmbed
   test _findOne embed                         $testFindOneEmbed
   test _count embed                           $testCountEmbed
+  test _aggregate embed                       $testAggregateEmbed
 """
 
   val port = 12345
@@ -87,6 +88,18 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
     val embedList = MongoEmbedder.instance.embed("info", "subject", list,
       """{"unitCount":{"_coll":"unit","_count":{"subject":"@[code]"}}}""")
     embedList.toString must_== """[ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文" , "unitCount" : 5} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語" , "unitCount" : 5} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學" , "unitCount" : 5} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "code" : "NA" , "name" : "自然" , "unitCount" : 2}]"""
+  }
+
+  def testAggregateEmbed = {
+    val list : java.util.List[ObjectId] = List(new ObjectId("55711d2ad6a23e26b37be430"),new ObjectId("55711d2ad6a23e26b37be431"), new ObjectId("55711d2ad6a23e26b37be432"), new ObjectId("55711d2ad6a23e26b37be433"))
+    val embedList = MongoEmbedder.instance.embed("info", "subject", list,
+      """{
+        "unitAggregate":{
+          "_coll":"unit",
+          "_aggregate":[
+            {"$match":{"subject":"@[code]"}},
+            {"$group":{"_id":"@[code]","count":{"$sum":1}}}]}}""")
+    embedList.toString must_== """[ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文" , "unitAggregate" : [ { "_id" : "PC" , "count" : 5}]} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語" , "unitAggregate" : [ { "_id" : "EN" , "count" : 5}]} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學" , "unitAggregate" : [ { "_id" : "MA" , "count" : 5}]} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "code" : "NA" , "name" : "自然" , "unitAggregate" : [ { "_id" : "NA" , "count" : 2}]}]"""
   }
 
   def beforeAll(): Unit = {
