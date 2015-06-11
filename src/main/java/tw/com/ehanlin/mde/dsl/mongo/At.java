@@ -1,4 +1,4 @@
-package tw.com.ehanlin.mde.dsl;
+package tw.com.ehanlin.mde.dsl.mongo;
 
 public class At {
 

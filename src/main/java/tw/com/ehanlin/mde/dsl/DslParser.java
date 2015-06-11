@@ -1,8 +1,9 @@
 package tw.com.ehanlin.mde.dsl;
 
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
 import tw.com.ehanlin.mde.dsl.action.*;
+import tw.com.ehanlin.mde.dsl.mongo.At;
+import tw.com.ehanlin.mde.dsl.mongo.MdeDBList;
+import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 import tw.com.ehanlin.mde.util.EmptyObject;
 import tw.com.ehanlin.mde.util.SpliceStringReader;
 
@@ -105,7 +106,7 @@ public class DslParser {
         }
 
         if(atPattern.matcher(content).matches()){
-            return content;
+            return new At(content);
         }
 
         if(longPattern.matcher(content).matches()){
@@ -144,9 +145,9 @@ public class DslParser {
         return result.toString();
     }
 
-    private BasicDBList parseMongoList(SpliceStringReader reader) {
+    private MdeDBList parseMongoList(SpliceStringReader reader) {
         SpliceStringReader.Matcher matcher;
-        BasicDBList result = new BasicDBList();
+        MdeDBList result = new MdeDBList();
         while (!((matcher = reader.splice(mongoSymbols)).finish())) {
             switch (matcher.match()) {
                 case "," : {
@@ -174,9 +175,9 @@ public class DslParser {
         return result;
     }
 
-    private BasicDBObject parseMongoMap(SpliceStringReader reader) {
+    private MdeDBObject parseMongoMap(SpliceStringReader reader) {
         SpliceStringReader.Matcher matcher;
-        BasicDBObject result = new BasicDBObject();
+        MdeDBObject result = new MdeDBObject();
         String currentKey = null;
         while (!((matcher = reader.splice(mongoSymbols)).finish())) {
             switch (matcher.match()) {
@@ -215,9 +216,9 @@ public class DslParser {
         return result;
     }
 
-    private BasicDBObject parseActionInfo(SpliceStringReader reader) {
+    private MdeDBObject parseActionInfo(SpliceStringReader reader) {
         SpliceStringReader.Matcher matcher;
-        BasicDBObject result = new BasicDBObject();
+        MdeDBObject result = new MdeDBObject();
         String currentKey = null;
         while(!((matcher = reader.splice(actionInfoSymbols)).finish())){
             switch(matcher.match()){
@@ -278,21 +279,21 @@ public class DslParser {
                 break;
         }
 
-        BasicDBObject infos = parseActionInfo(reader);
+        MdeDBObject infos = parseActionInfo(reader);
 
         switch(actionName){
             case "find" :
-                return new Find(scope, (String)infos.get("db"), (String)infos.get("coll"), (BasicDBObject)infos.get("query"), (BasicDBObject)infos.get("projection"));
+                return new Find(scope, (String)infos.get("db"), (String)infos.get("coll"), (MdeDBObject)infos.get("query"), (MdeDBObject)infos.get("projection"));
             case "findOne" :
-                return new FindOne(scope, (String)infos.get("db"), (String)infos.get("coll"), (BasicDBObject)infos.get("query"), (BasicDBObject)infos.get("projection"));
+                return new FindOne(scope, (String)infos.get("db"), (String)infos.get("coll"), (MdeDBObject)infos.get("query"), (MdeDBObject)infos.get("projection"));
             case "findOneById" :
-                return new FindOneById(scope, (String)infos.get("db"), (String)infos.get("coll"), (BasicDBObject)infos.get("projection"));
+                return new FindOneById(scope, (String)infos.get("db"), (String)infos.get("coll"), (MdeDBObject)infos.get("projection"));
             case "distinct" :
-                return new Distinct(scope, (String)infos.get("db"), (String)infos.get("coll"), (String)infos.get("key"), (BasicDBObject)infos.get("query"));
+                return new Distinct(scope, (String)infos.get("db"), (String)infos.get("coll"), (String)infos.get("key"), (MdeDBObject)infos.get("query"));
             case "count" :
-                return new Count(scope, (String)infos.get("db"), (String)infos.get("coll"), (BasicDBObject)infos.get("query"));
+                return new Count(scope, (String)infos.get("db"), (String)infos.get("coll"), (MdeDBObject)infos.get("query"));
             case "aggregate" :
-                return new Aggregate(scope, (String)infos.get("db"), (String)infos.get("coll"), (BasicDBList)infos.get("pipelines"));
+                return new Aggregate(scope, (String)infos.get("db"), (String)infos.get("coll"), (MdeDBList)infos.get("pipelines"));
         }
 
         return null;

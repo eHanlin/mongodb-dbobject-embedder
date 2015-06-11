@@ -47,9 +47,9 @@ class DslTest extends Specification {def is = s2"""
                            |{
                            |  @findOneById [ db=info, coll=Unit, projection={ "createDate" : 0} ]
                            |  unit  {
-                           |    @findOne < query={ "_id" : "@"}, projection={ } >
+                           |    @findOne < query={ "_id" : @}, projection={ } >
                            |    subject
-                           |    @distinct ( coll=Video, key=subject, query={ "subject" : "PC" , "knowledge" : { "$in" : "@.knowledge"}} )
+                           |    @distinct ( coll=Video, key=subject, query={ "subject" : "PC" , "knowledge" : { "$in" : @.knowledge}} )
                            |    @findOneById [ coll=subject, projection={ } ]
                            |    videoSubject
                            |    @findOneById [ coll=Knowledge, projection={ } ]
@@ -59,7 +59,7 @@ class DslTest extends Specification {def is = s2"""
                            |    }
                            |  }
                            |  video  {
-                           |    @findOne < query={ "_id" : "@"}, projection={ } >
+                           |    @findOne < query={ "_id" : @}, projection={ } >
                            |    subject
                            |  }
                            |}""".stripMargin

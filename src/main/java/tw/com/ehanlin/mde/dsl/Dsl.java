@@ -1,6 +1,5 @@
 package tw.com.ehanlin.mde.dsl;
 
-import tw.com.ehanlin.mde.dsl.action.Action;
 import tw.com.ehanlin.mde.util.EmptyObject;
 
 import java.util.*;
@@ -24,6 +23,7 @@ public class Dsl {
 
     public void appendAction(Action action) {
         _actions.add(action);
+        action._dsl = this;
     }
 
     public void appendAction(Collection<Action> actions) {
@@ -34,6 +34,7 @@ public class Dsl {
 
     public void appendDsl(String key, Dsl dsl) {
         _dsls.put(key, dsl);
+        dsl._parent = this;
     }
 
     public Boolean isEmpty() {

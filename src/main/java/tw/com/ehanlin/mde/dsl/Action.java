@@ -1,4 +1,6 @@
-package tw.com.ehanlin.mde.dsl.action;
+package tw.com.ehanlin.mde.dsl;
+
+import tw.com.ehanlin.mde.dsl.Dsl;
 
 public abstract class Action {
 
@@ -24,6 +26,10 @@ public abstract class Action {
 
     public String coll() {
         return _coll;
+    }
+
+    public Dsl dsl() {
+        return _dsl;
     }
 
 
@@ -69,5 +75,7 @@ public abstract class Action {
     private Scope _scope;
     private String _db;
     private String _coll;
+
+    Dsl _dsl;
 
 }

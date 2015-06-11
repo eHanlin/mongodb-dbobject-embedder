@@ -1,15 +1,16 @@
 package tw.com.ehanlin.mde.dsl.action;
 
-import com.mongodb.BasicDBList;
+import tw.com.ehanlin.mde.dsl.Action;
+import tw.com.ehanlin.mde.dsl.mongo.MdeDBList;
 
 public class Aggregate extends Action {
 
-    public Aggregate(Scope scope, String db, String coll, BasicDBList pipelines) {
+    public Aggregate(Scope scope, String db, String coll, MdeDBList pipelines) {
         super(scope, db, coll);
         _pipelines = pipelines;
     }
 
-    public BasicDBList pipelines() {
+    public MdeDBList pipelines() {
         return _pipelines;
     }
 
@@ -18,5 +19,5 @@ public class Aggregate extends Action {
         return toString("aggregate", "db", db(), "coll", coll(), "pipelines", pipelines());
     }
 
-    private BasicDBList _pipelines;
+    private MdeDBList _pipelines;
 }

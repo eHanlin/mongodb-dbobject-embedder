@@ -1,17 +1,18 @@
 package tw.com.ehanlin.mde.dsl.action;
 
-import com.mongodb.BasicDBObject;
+import tw.com.ehanlin.mde.dsl.Action;
+import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 import tw.com.ehanlin.mde.util.EmptyObject;
 
 public class Count extends Action {
 
-    public Count(Scope scope, String db, String coll, BasicDBObject query) {
+    public Count(Scope scope, String db, String coll, MdeDBObject query) {
         super(scope, db, coll);
-        _query = (query != null) ? query : EmptyObject.BasicDBObject;
+        _query = (query != null) ? query : EmptyObject.MdeDBObject;
     }
 
-    public BasicDBObject query() {
-        return (_query.isEmpty()) ? _query : (BasicDBObject)_query.copy();
+    public MdeDBObject query() {
+        return (_query.isEmpty()) ? _query : (MdeDBObject)_query.copy();
     }
 
     @Override
@@ -19,5 +20,5 @@ public class Count extends Action {
         return toString("count", "db", db(), "coll", coll(), "query", query());
     }
 
-    private BasicDBObject _query;
+    private MdeDBObject _query;
 }
