@@ -5,28 +5,34 @@
 ## DSL語法
 ```
 //用傳入的 String List 中的 Task id 填充 Task
-@findOneById [db=user, coll=Task, projection={"unit":1}]
+@findOneById [db=user, coll=Task, projection={unit:1}]
 {
 
-  @findOneById {db=info, coll=Unit, projection={"createDate":0}}
-  unit : {
+  @findOneById [db=info, coll=Unit, projection={createDate:0}]
+  unit {
 
+    @findOne <query={_id:@}>
+    subject
+
+    @distinct (coll=Video, key=subject, query={subject:'PC',knowledge:{$in:@.knowledge}})
+    @findOneById [coll=subject]
+    videoSubject
+    
     @findOneById [coll=Knowledge]
-    knowledge : {
-      
+    knowledge {
+        
       @findOneById <>
-      subject : true
+      subject
       
     }
 
-    @findOne <query={"_id":@}>
-    subject : true
-
-    //虛擬變數，先 distinct 取得 subject 的 id ， 再用 findOneById 填充 subject 的詳細資訊
-    @distinct (coll=Video, key=subject, query={"knowledge":{"$in":@[knowledge]}})
-    @findOneById [coll=subject]
-    videoSubject : true
-
+  }
+  
+  video {
+  
+    @findOne <query={_id:@}>
+    subject
+        
   }
 
 }
@@ -54,6 +60,7 @@
 * db
 * coll
 * key
+* query
 
 ### @count
 * db
@@ -70,9 +77,9 @@
 
 * ( )  父層為 @
 * < >  屬性值本身為 @
-* [ ]  屬性值底下的每個 item 為 @
+* \[ \]  屬性值底下的每個 item 為 @
 
-若屬性值本身不是集合，則 [] 和 {} 的 @ 指向同一個物件
+若屬性值本身不是集合，則 \[ \] 和 { } 的 @ 指向同一個物件
 
 ```
 {
