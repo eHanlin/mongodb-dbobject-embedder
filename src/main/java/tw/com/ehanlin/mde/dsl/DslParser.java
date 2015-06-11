@@ -34,28 +34,74 @@ public class DslParser {
                     }
                     break;
                 case "{" :
-                    Dsl result = parseContent(reader);
-                    result.appendAction(actions);
+                    Dsl result = new Dsl(actions);
+                    parseContent(result, reader);
                     return result;
             }
         }while(!((matcher = reader.splice(rootSymbols)).finish()));
 
-        return null;
+        return EmptyObject.Dsl;
     }
 
 
 
 
     private List<String> rootSymbols = Arrays.asList("@", "{");
-    private List<String> propertySymbols = Arrays.asList("@", "{", "}");
+    private List<String> readActionOrPropertySymbols = Arrays.asList("@", "{", "}");
     private List<String> actionScopeSymbols = Arrays.asList("(", "<", "[");
     private List<String> actionInfoSymbols = Arrays.asList("=", ",", "[", "{", ")", ">", "]");
     private List<String> mongoSymbols = Arrays.asList(":", ",", "{", "[", "]", "}");
+    private Pattern propertyPattern = Pattern.compile("\\S+");
     private Pattern stringPattern = Pattern.compile("^(?:'(.*)'|\"(.*)\")$");
     private Pattern atPattern = Pattern.compile("^@.*");
     private Pattern longPattern = Pattern.compile("^[+-]?\\d+$");
     private Pattern doublePattern = Pattern.compile("^[+-]?\\d*\\.\\d+$");
     private Pattern booleanPattern = Pattern.compile("^(true|false)$", Pattern.CASE_INSENSITIVE);
+
+
+    private void parseContent(Dsl current, SpliceStringReader reader){
+        List<Action> actions = new ArrayList();
+        SpliceStringReader.Matcher matcher;
+        loop: while(!((matcher = reader.splice(readActionOrPropertySymbols)).finish())){
+            switch(matcher.match()){
+                case "@" : {
+                    for(String parseProperty : parseProperties(matcher.prefix().trim())){
+                        current.appendDsl(parseProperty, new Dsl(actions));
+                        actions = new ArrayList();
+                    }
+                    actions.add(parseAction(reader));
+                    break;
+                }
+                case "{" : {
+                    Dsl lastDsl = null;
+                    for(String parseProperty : parseProperties(matcher.prefix().trim())){
+                        lastDsl = new Dsl(actions);
+                        current.appendDsl(parseProperty, lastDsl);
+                        actions = new ArrayList();
+                    }
+                    parseContent(lastDsl, reader);
+                    break;
+                }
+                case "}" : {
+                    for(String parseProperty : parseProperties(matcher.prefix().trim())){
+                        current.appendDsl(parseProperty, new Dsl(actions));
+                        actions = new ArrayList();
+                    }
+                    break loop;
+                }
+            }
+        }
+    }
+
+
+    private List<String> parseProperties(String properties){
+        List<String> result = new ArrayList();
+        Matcher matcher = propertyPattern.matcher(properties);
+        while (matcher.find()){
+            result.add(matcher.group());
+        }
+        return result;
+    }
 
 
     private Object parseMongoContent(String content) {
@@ -67,7 +113,7 @@ public class DslParser {
         }
 
         if(atPattern.matcher(content).matches()){
-            return new At(content);
+            return content;
         }
 
         if(longPattern.matcher(content).matches()){
@@ -258,78 +304,6 @@ public class DslParser {
         }
 
         return null;
-    }
-
-    private Dsl parseContent(SpliceStringReader reader) {
-        SpliceStringReader.Matcher matcher = reader.splice(propertySymbols);
-        if(matcher.finish()){
-            return EmptyObject.Dsl;
-        }
-
-        Dsl dsl = new Dsl();
-        do{
-            switch(matcher.match()){
-                case "@" :
-                    parseActionProperty(dsl, reader);
-                    break;
-                case "{" :
-                    String key = matcher.prefix().trim();
-                    if(key.length() > 0){
-                        Dsl childDsl = parseContent(matcher.reader());
-                        if(!childDsl.isEmpty()){
-                            dsl.appendDsl(key, childDsl);
-                        }
-                    }
-                    break;
-                case "}" :
-                    return dsl;
-            }
-        }while(!((matcher = reader.splice(propertySymbols)).finish()));
-
-        return dsl;
-    }
-
-    private void parseActionProperty(Dsl parent, SpliceStringReader reader) {
-        List<Action> actions = new ArrayList<Action>();
-        Action firstAction = parseAction(reader);
-        if(firstAction != null){
-            actions.add(firstAction);
-        }
-        SpliceStringReader.Matcher matcher;
-        loop: while(!((matcher = reader.splice(propertySymbols)).finish())){
-            String key = matcher.prefix().trim();
-            switch(matcher.match()){
-                case "@" :
-                    if(key.length() > 0){
-                        Dsl dsl = new Dsl();
-                        dsl.appendAction(actions);
-                        parent.appendDsl(key, dsl);
-                    }else{
-                        Action action = parseAction(reader);
-                        if(action != null){
-                            actions.add(action);
-                        }
-                    }
-                    break;
-                case "{" :
-                    if(key.length() > 0){
-                        Dsl childDsl = parseContent(matcher.reader());
-                        childDsl.appendAction(actions);
-                        if(!childDsl.isEmpty()){
-                            parent.appendDsl(key, childDsl);
-                        }
-                    }
-                    break;
-                case "}" : {
-                    if(key.length() > 0){
-                        Dsl dsl = new Dsl();
-                        dsl.appendAction(actions);
-                        parent.appendDsl(key, dsl);
-                    }
-                    break loop;
-                }
-            }
-        }
     }
 
 }

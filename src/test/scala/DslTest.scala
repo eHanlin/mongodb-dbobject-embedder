@@ -10,25 +10,56 @@ class DslTest extends Specification {def is = s2"""
 
   def checkBasic = {
     val dsl = DslParser.instance.parse(
-      """
-        @findOneById [db=user, coll=Task, projection={unit:true}]
-        {
+      """@findOneById [db=user, coll=Task, projection={unit:true}]
+        |{
+        |
+        |  @findOneById [db=info, coll=Unit, projection={createDate:0}]
+        |  unit {
+        |
+        |    @findOne <query={_id:@}>
+        |    subject
+        |
+        |    @distinct (coll=Video, key=subject, query={subject:'PC',knowledge:{$in:@.knowledge}})
+        |    @findOneById [coll=subject]
+        |    videoSubject
+        |
+        |    @findOneById [coll=Knowledge]
+        |    knowledge {
+        |
+        |      @findOneById <>
+        |      subject
+        |
+        |    }
+        |
+        |  }
+        |
+        |  video {
+        |
+        |    @findOne <query={_id:@}>
+        |    subject
+        |
+        |  }
+        |
+        |}
+        |""".stripMargin)
 
-          @findOneById (coll=Knowledge, projection={subject:1})
-          knowledge {
-
-            @findOneById <>
-            subject
-
-          }
-
-        }
-      """)
-    dsl.toString must_== """@FindOneById [ db=user, coll=Task, projection={ "unit" : true} ]
+    dsl.toString must_== """@findOneById [ db=user, coll=Task, projection={ "unit" : true} ]
                            |{
-                           |  @FindOneById ( coll=Knowledge, projection={ "subject" : 1} )
-                           |  knowledge  {
-                           |    @FindOneById < projection={ } >
+                           |  @findOneById [ db=info, coll=Unit, projection={ "createDate" : 0} ]
+                           |  unit  {
+                           |    @findOne < query={ "_id" : "@"}, projection={ } >
+                           |    subject
+                           |    @distinct ( coll=Video, key=subject, query={ "subject" : "PC" , "knowledge" : { "$in" : "@.knowledge"}} )
+                           |    @findOneById [ coll=subject, projection={ } ]
+                           |    videoSubject
+                           |    @findOneById [ coll=Knowledge, projection={ } ]
+                           |    knowledge    {
+                           |      @findOneById < projection={ } >
+                           |      subject
+                           |    }
+                           |  }
+                           |  video  {
+                           |    @findOne < query={ "_id" : "@"}, projection={ } >
                            |    subject
                            |  }
                            |}""".stripMargin

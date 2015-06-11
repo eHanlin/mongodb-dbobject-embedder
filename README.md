@@ -5,7 +5,7 @@
 ## DSL語法
 ```
 //用傳入的 String List 中的 Task id 填充 Task
-@findOneById [db=user, coll=Task, projection={unit:1}]
+@findOneById [db=user, coll=Task, projection={unit:true}]
 {
 
   @findOneById [db=info, coll=Unit, projection={createDate:0}]

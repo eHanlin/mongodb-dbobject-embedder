@@ -12,7 +12,7 @@ public class FindOneById extends Find {
 
     @Override
     public String toString() {
-        return toString("FindOneById", "db", db(), "coll", coll(), "projection", projection());
+        return toString("findOneById", "db", db(), "coll", coll(), "projection", projection());
     }
 
 }

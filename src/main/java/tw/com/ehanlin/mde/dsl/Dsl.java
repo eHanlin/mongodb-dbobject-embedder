@@ -18,6 +18,10 @@ public class Dsl {
 
     }
 
+    public Dsl(Collection<Action> actions) {
+        appendAction(actions);
+    }
+
     public void appendAction(Action action) {
         _actions.add(action);
     }
