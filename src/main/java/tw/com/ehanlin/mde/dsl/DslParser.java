@@ -63,30 +63,22 @@ public class DslParser {
         List<Action> actions = new ArrayList();
         SpliceStringReader.Matcher matcher;
         loop: while(!((matcher = reader.splice(readActionOrPropertySymbols)).finish())){
+            Dsl lastDsl = null;
+            for(String parseProperty : parseProperties(matcher.prefix().trim())){
+                lastDsl = new Dsl(actions);
+                current.appendDsl(parseProperty, lastDsl);
+                actions = new ArrayList();
+            }
             switch(matcher.match()){
                 case "@" : {
-                    for(String parseProperty : parseProperties(matcher.prefix().trim())){
-                        current.appendDsl(parseProperty, new Dsl(actions));
-                        actions = new ArrayList();
-                    }
                     actions.add(parseAction(reader));
                     break;
                 }
                 case "{" : {
-                    Dsl lastDsl = null;
-                    for(String parseProperty : parseProperties(matcher.prefix().trim())){
-                        lastDsl = new Dsl(actions);
-                        current.appendDsl(parseProperty, lastDsl);
-                        actions = new ArrayList();
-                    }
                     parseContent(lastDsl, reader);
                     break;
                 }
                 case "}" : {
-                    for(String parseProperty : parseProperties(matcher.prefix().trim())){
-                        current.appendDsl(parseProperty, new Dsl(actions));
-                        actions = new ArrayList();
-                    }
                     break loop;
                 }
             }
