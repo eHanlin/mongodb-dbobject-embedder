@@ -9,98 +9,33 @@ import org.bson.types.ObjectId
 import org.specs2.specification.BeforeAfterAll
 import org.specs2._
 
-import com.ehanlin.mde.MongoEmbedder
+import tw.com.ehanlin.mde.MongoEmbedder
 
 class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2"""
-  check mock data                             $checkMockData
-  test embed                                  $testBasicEmbed
-  test embed include                          $testBasicEmbedInclude
-  test _db and _coll embed                    $testCrossEmbed
-  test _find embed                            $testFindEmbed
-  test _findOne embed                         $testFindOneEmbed
-  test _count embed                           $testCountEmbed
-  test _aggregate embed                       $testAggregateEmbed
+  check root findOneById                          $checkRootFindOneById
 """
 
   val port = 12345
   var mongodExecutable : MongodExecutable = null
   var mongo : Mongo = null
 
-  def checkMockData = {
-    val mongo = new Mongo("localhost", port)
-    val infoDB = mongo.getDB("info")
-    val subjectColl = infoDB.getCollection("subject")
-    val subjectEN = subjectColl.findOne(new BasicDBObject("code", "EN"))
-    (subjectEN must_!= null) and
-    (subjectEN.get("_id").toString must_== "55711d2ad6a23e26b37be431") and
-    (subjectEN.get("name") must_== "英語")
+
+  def checkRootFindOneById = {
+    val dsl = """
+                |@findOneById [db=info, coll=video]
+                |[
+                |   @findOneById <db=info, coll=subject, projection={name:1}>
+                |   subject
+                |]
+              """.stripMargin
+    val list = new BasicDBList()
+    list.addAll(List("video_PC_1_1", "video_PC_2_1", "video_PC_2_2", "video_PC_3_1"))
+    val result = MongoEmbedder.instance.embed(list, dsl)
+    println(result)
+    ok
   }
 
-  def testBasicEmbed = {
-    val list : java.util.List[String] = List("video_PC_1_1", "video_PC_2_1", "video_PC_2_2", "video_PC_3_1")
-    val embedList = MongoEmbedder.instance.embed("info", "video", list, """{"subject":true,unit:true}""").asInstanceOf[BasicDBList]
-    embedList.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : "PC" , "name" : "第一課" , "order" : 1}]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_1" , "order" : 2 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : "PC" , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_2" , "order" : 3 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : "PC" , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : "PC" , "name" : "第一課" , "order" : 1} , { "_id" : "unit_PC_2" , "subject" : "PC" , "name" : "第二課" , "order" : 2} , { "_id" : "unit_PC_3" , "subject" : "PC" , "name" : "第三課" , "order" : 3}]}]"""
-  }
 
-  def testBasicEmbedInclude = {
-    val list : java.util.List[String] = List("video_PC_1_1", "video_PC_2_1", "video_PC_2_2", "video_PC_3_1")
-    val embedList = MongoEmbedder.instance.embed("info", "video", list,
-      """{"subject":true,unit:true}""",
-      """{"name":true,"subject":{name:true},unit:{name:true}}""").asInstanceOf[BasicDBList]
-    embedList.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_1_1" , "unit" : [ { "_id" : "unit_PC_1" , "name" : "第一課"}]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_2_1" , "unit" : [ { "_id" : "unit_PC_2" , "name" : "第二課"}]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_2_2" , "unit" : [ { "_id" : "unit_PC_2" , "name" : "第二課"}]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_3_1" , "unit" : [ { "_id" : "unit_PC_1" , "name" : "第一課"} , { "_id" : "unit_PC_2" , "name" : "第二課"} , { "_id" : "unit_PC_3" , "name" : "第三課"}]}]"""
-  }
-
-  def testCrossEmbed = {
-    val list : java.util.List[String] = List("task_1", "task_2")
-    val embedList = MongoEmbedder.instance.embed("user", "task", list,
-      """{
-        "subject":{"_db":"info"},
-        "student":{"_coll":"user"},
-        "resource":{"_db":"info","_coll":"video",
-          "subject":{"_db":"info"},
-          "unit":{"_db":"info"}}}""",
-      """{"subject":{"name":true},"student":{"name":true},"resource":{"name":true,"subject":true,"unit":true}}""").asInstanceOf[BasicDBList]
-    embedList.toString must_== """[ { "_id" : "task_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "resource" : { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_1_1" , "unit" : [ { "_id" : "unit_PC_1" , "subject" : "PC" , "name" : "第一課" , "order" : 1}]} , "student" : [ { "_id" : { "$oid" : "55712d61d6a23e26b37be440"} , "name" : "user1"}]} , { "_id" : "task_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "resource" : { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_3_1" , "unit" : [ { "_id" : "unit_PC_1" , "subject" : "PC" , "name" : "第一課" , "order" : 1} , { "_id" : "unit_PC_2" , "subject" : "PC" , "name" : "第二課" , "order" : 2} , { "_id" : "unit_PC_3" , "subject" : "PC" , "name" : "第三課" , "order" : 3}]} , "student" : [ { "_id" : { "$oid" : "55712d61d6a23e26b37be440"} , "name" : "user1"} , { "_id" : { "$oid" : "55712d61d6a23e26b37be441"} , "name" : "user2"} , { "_id" : { "$oid" : "55712d61d6a23e26b37be442"} , "name" : "user3"}]}]"""
-  }
-
-  def testFindEmbed = {
-    val list : java.util.List[String] = List("unit_PC_5", "unit_EN_1", "unit_EN_2", "unit_MA_5", "unit_NA_1", "unit_SO_1")
-    val embedList = MongoEmbedder.instance.embed("info", "unit", list,
-      """{
-        "subject":{"_find":{"code":"@[subject]"}},
-        "embedSubject":{"_coll":"subject","_find":{"code":"@[subject]"}}}""",
-      """{"subject":{"name":true}}""")
-    embedList.toString must_== """[ { "_id" : "unit_PC_5" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "embedSubject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}]} , { "_id" : "unit_EN_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "name" : "英語"}] , "embedSubject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語"}]} , { "_id" : "unit_EN_2" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "name" : "英語"}] , "embedSubject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語"}]} , { "_id" : "unit_MA_5" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "name" : "數學"}] , "embedSubject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學"}]} , { "_id" : "unit_NA_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "name" : "自然"}] , "embedSubject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "code" : "NA" , "name" : "自然"}]} , { "_id" : "unit_SO_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be434"} , "name" : "社會"}] , "embedSubject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be434"} , "code" : "SO" , "name" : "社會"}]}]"""
-  }
-
-  def testFindOneEmbed = {
-    val list : java.util.List[String] = List("unit_PC_5", "unit_EN_1", "unit_EN_2", "unit_MA_5", "unit_NA_1", "unit_SO_1")
-    val embedList = MongoEmbedder.instance.embed("info", "unit", list,
-      """{
-        "subject":{"_findOne":{"code":"@[subject]"}},
-        "embedSubject":{"_coll":"subject","_findOne":{"code":"@[subject]"}}}""",
-      """{"subject":{"name":true}}""")
-    embedList.toString must_== """[ { "_id" : "unit_PC_5" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}} , { "_id" : "unit_EN_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "name" : "英語"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語"}} , { "_id" : "unit_EN_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "name" : "英語"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語"}} , { "_id" : "unit_MA_5" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "name" : "數學"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學"}} , { "_id" : "unit_NA_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "name" : "自然"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "code" : "NA" , "name" : "自然"}} , { "_id" : "unit_SO_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be434"} , "name" : "社會"} , "embedSubject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be434"} , "code" : "SO" , "name" : "社會"}}]"""
-  }
-
-  def testCountEmbed = {
-    val list : java.util.List[ObjectId] = List(new ObjectId("55711d2ad6a23e26b37be430"),new ObjectId("55711d2ad6a23e26b37be431"), new ObjectId("55711d2ad6a23e26b37be432"), new ObjectId("55711d2ad6a23e26b37be433"))
-    val embedList = MongoEmbedder.instance.embed("info", "subject", list,
-      """{"unitCount":{"_coll":"unit","_count":{"subject":"@[code]"}}}""")
-    embedList.toString must_== """[ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文" , "unitCount" : 5} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語" , "unitCount" : 5} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學" , "unitCount" : 5} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "code" : "NA" , "name" : "自然" , "unitCount" : 2}]"""
-  }
-
-  def testAggregateEmbed = {
-    val list : java.util.List[ObjectId] = List(new ObjectId("55711d2ad6a23e26b37be430"),new ObjectId("55711d2ad6a23e26b37be431"), new ObjectId("55711d2ad6a23e26b37be432"), new ObjectId("55711d2ad6a23e26b37be433"))
-    val embedList = MongoEmbedder.instance.embed("info", "subject", list,
-      """{
-        "unitAggregate":{
-          "_coll":"unit",
-          "_aggregate":[
-            {"$match":{"subject":"@[code]"}},
-            {"$group":{"_id":"@[code]","count":{"$sum":1}}}]}}""")
-    embedList.toString must_== """[ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文" , "unitAggregate" : [ { "_id" : "PC" , "count" : 5}]} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語" , "unitAggregate" : [ { "_id" : "EN" , "count" : 5}]} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學" , "unitAggregate" : [ { "_id" : "MA" , "count" : 5}]} , { "_id" : { "$oid" : "55711d2ad6a23e26b37be433"} , "code" : "NA" , "name" : "自然" , "unitAggregate" : [ { "_id" : "NA" , "count" : 2}]}]"""
-  }
 
   def beforeAll(): Unit = {
     mongodExecutable = MongodStarter.getDefaultInstance().prepare(new MongodConfigBuilder()
@@ -184,7 +119,6 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
       buildMockTask("task_2", "55711d2ad6a23e26b37be430", "video_PC_3_1", List("55712d61d6a23e26b37be440", "55712d61d6a23e26b37be441", "55712d61d6a23e26b37be442"))
     }
     mockTask(mongo.getDB("user").getCollection("task"))
-
 
     MongoEmbedder.registerDB(mongo.getDB("info"))
     MongoEmbedder.registerDB("info", mongo.getDB("info"))

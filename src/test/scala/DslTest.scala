@@ -2,10 +2,7 @@ import org.specs2.Specification
 import tw.com.ehanlin.mde.dsl.DslParser
 
 class DslTest extends Specification {def is = s2"""
-  check basic                       $checkBasic
-
-
-
+  check dsl basic                       $checkBasic
 """
 
   def checkBasic = {
