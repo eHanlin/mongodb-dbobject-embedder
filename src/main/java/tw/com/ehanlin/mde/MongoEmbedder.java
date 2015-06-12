@@ -1,27 +1,26 @@
 package tw.com.ehanlin.mde;
 
-
 import com.mongodb.DB;
-import com.mongodb.DBObject;
-import tw.com.ehanlin.mde.dsl.Action;
-import tw.com.ehanlin.mde.dsl.Dsl;
-import tw.com.ehanlin.mde.dsl.DslParser;
-
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.StreamSupport;
+
+import tw.com.ehanlin.mde.dsl.Dsl;
+import tw.com.ehanlin.mde.dsl.DslParser;
+import tw.com.ehanlin.mde.util.DuplicateConcurrentHashMap;
 
 public class MongoEmbedder {
 
-    public static MongoEmbedder instance = new MongoEmbedder();
+    public static final MongoEmbedder instance = new MongoEmbedder();
+    public static final MongoEmbedder duplicate = new DuplicateMongoEmbedder();
 
     public static void registerDB(DB db) {
         instance.register(_defaultKey, db);
+        duplicate.register(_defaultKey, db);
     }
 
     public static void registerDB(String key, DB db) {
         instance.register(key, db);
+        duplicate.register(key, db);
     }
 
     private static String _defaultKey = "_default";
@@ -36,7 +35,7 @@ public class MongoEmbedder {
     }
 
     public Object embed(Object resource, Dsl dsl) {
-        System.out.println("< embed >\r\n[ resource ]\r\n"+resource+"\r\n[ dsl ]\r\n"+dsl);
+        System.out.println("\r\n< embed >\r\n[ resource ]\r\n"+resource+"\r\n[ dsl ]\r\n"+dsl);
         return dsl.execute(resource, dbMap, new ConcurrentHashMap(), false);
     }
 
@@ -44,6 +43,14 @@ public class MongoEmbedder {
         dbMap.put(key, db);
     }
 
-    private final Map<String, DB> dbMap = new ConcurrentHashMap();
+    protected final Map<String, DB> dbMap = new ConcurrentHashMap();
+
+
+    public static class DuplicateMongoEmbedder extends MongoEmbedder {
+        @Override
+        public Object embed(Object resource, Dsl dsl) {
+            return dsl.execute(resource, dbMap, new DuplicateConcurrentHashMap(), false);
+        }
+    }
 
 }
