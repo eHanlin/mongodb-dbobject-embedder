@@ -10,6 +10,8 @@ import tw.com.ehanlin.mde.util.SpliceStringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,11 +19,16 @@ public class DslParser {
 
     public static DslParser instance = new DslParser();
 
-
     public Dsl parse(String dsl) {
+
+        if(cache.containsKey(dsl)){
+            return cache.get(dsl);
+        }
+
         SpliceStringReader reader = new SpliceStringReader(dsl);
         SpliceStringReader.Matcher matcher = reader.splice(rootSymbols);
         if(matcher.finish()){
+            cache.put(dsl, EmptyObject.Dsl);
             return EmptyObject.Dsl;
         }
 
@@ -35,20 +42,23 @@ public class DslParser {
                     }
                     break;
                 case "{" :
-                    Dsl result = new Dsl(actions);
+                case "[" :
+                    Dsl result = (matcher.match().equals("{")) ? new Dsl(Dsl.Iterate.MAP, actions) : new Dsl(Dsl.Iterate.LIST, actions);
                     parseContent(result, reader);
+                    cache.put(dsl, result);
                     return result;
             }
         }while(!((matcher = reader.splice(rootSymbols)).finish()));
 
+        cache.put(dsl, EmptyObject.Dsl);
         return EmptyObject.Dsl;
     }
 
 
 
 
-    private List<String> rootSymbols = Arrays.asList("@", "{");
-    private List<String> readActionOrPropertySymbols = Arrays.asList("@", "{", "}");
+    private List<String> rootSymbols = Arrays.asList("@", "{", "[");
+    private List<String> readActionOrPropertySymbols = Arrays.asList("@", "{", "[", "}", "]");
     private List<String> actionScopeSymbols = Arrays.asList("(", "<", "[");
     private List<String> actionInfoSymbols = Arrays.asList("=", ",", "[", "{", ")", ">", "]");
     private List<String> mongoSymbols = Arrays.asList(":", ",", "{", "[", "]", "}");
@@ -71,17 +81,20 @@ public class DslParser {
                 actions = new ArrayList();
             }
             switch(matcher.match()){
-                case "@" : {
+                case "@" :
                     actions.add(parseAction(reader));
                     break;
-                }
-                case "{" : {
+                case "{" :
+                case "[" :
+                    if(matcher.match().equals("{"))
+                        lastDsl.changeIterate(Dsl.Iterate.MAP);
+                    else
+                        lastDsl.changeIterate(Dsl.Iterate.LIST);
                     parseContent(lastDsl, reader);
                     break;
-                }
-                case "}" : {
+                case "}" :
+                case "]" :
                     break loop;
-                }
             }
         }
     }
@@ -298,5 +311,7 @@ public class DslParser {
 
         return null;
     }
+
+    private Map<String, Dsl> cache = new ConcurrentHashMap();
 
 }

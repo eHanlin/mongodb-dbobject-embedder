@@ -19,12 +19,12 @@
     videoSubject
     
     @findOneById [coll=Knowledge]
-    knowledge {
+    knowledge [
         
       @findOneById <>
       subject
       
-    }
+    ]
 
   }
   
@@ -34,6 +34,21 @@
     subject
         
   }
+  
+  knowledge [
+    
+    @findOne <query={_id:@}>
+    subject
+    
+    @findOne [query={_id:@}]
+    child [
+      
+      @findOne <query={_id:@}>
+      subject
+      
+    ]
+    
+  ]
 
 }
 ```

@@ -1,5 +1,8 @@
 package tw.com.ehanlin.mde.dsl.action;
 
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import tw.com.ehanlin.mde.dsl.mongo.AtEvaluator;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 
 public class Distinct extends Count {
@@ -16,6 +19,16 @@ public class Distinct extends Count {
     @Override
     public String toString() {
         return toString("distinct", "db", db(), "coll", coll(), "key", key(), "query", query());
+    }
+
+    @Override
+    protected String cacheKey(Object resource, DBCollection coll) {
+        return "distinct_"+coll.getFullName()+"_"+key()+"_"+AtEvaluator.eval(resource, query()).toString();
+    }
+
+    @Override
+    protected Object executeObject(Object resource, DBCollection coll) {
+        return coll.distinct(key(), AtEvaluator.eval(resource, query()));
     }
 
     private String _key;

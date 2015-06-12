@@ -3,7 +3,7 @@ package tw.com.ehanlin.mde.dsl.action;
 import tw.com.ehanlin.mde.dsl.mongo.At;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 
-public class FindOneById extends Find {
+public class FindOneById extends FindOne {
 
     private static MdeDBObject query = new MdeDBObject("_id", new At("@"));
 

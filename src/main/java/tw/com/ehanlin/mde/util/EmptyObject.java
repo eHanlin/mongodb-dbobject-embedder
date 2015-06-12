@@ -11,6 +11,7 @@ public class EmptyObject {
     public static MdeDBObject MdeDBObject = new MdeDBObject();
     public static MdeDBList MdeDBList = new MdeDBList();
     public static Dsl Dsl = new Dsl();
+    public static Null Null = tw.com.ehanlin.mde.dsl.mongo.Null.instance;
 
     private EmptyObject() {
 
