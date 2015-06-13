@@ -5,6 +5,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import tw.com.ehanlin.mde.dsl.mongo.AtEvaluator;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
+import tw.com.ehanlin.mde.util.DataStack;
 
 public class FindOne extends Find {
 
@@ -18,13 +19,13 @@ public class FindOne extends Find {
     }
 
     @Override
-    protected String cacheKey(Object resource, DBCollection coll) {
-        return "findOne_"+coll.getFullName()+"_"+ AtEvaluator.eval(resource, query()).toString()+"_"+AtEvaluator.eval(resource, projection()).toString();
+    protected String cacheKey(DataStack data, DBCollection coll) {
+        return "findOne_"+coll.getFullName()+"_"+ AtEvaluator.eval(data, query()).toString()+"_"+AtEvaluator.eval(data, projection()).toString();
     }
 
     @Override
-    protected Object executeObject(Object resource, DBCollection coll) {
-        return coll.findOne(AtEvaluator.eval(resource, query()), AtEvaluator.eval(resource, projection()));
+    protected Object executeObject(DataStack data, DBCollection coll) {
+        return coll.findOne(AtEvaluator.eval(data, query()), AtEvaluator.eval(data, projection()));
     }
 
 }

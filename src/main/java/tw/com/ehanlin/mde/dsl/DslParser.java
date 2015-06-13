@@ -285,7 +285,7 @@ public class DslParser {
                 scope = Action.Scope.PARENT;
                 break;
             case "<" :
-                scope = Action.Scope.SALF;
+                scope = Action.Scope.SELF;
                 break;
             case "[" :
                 scope = Action.Scope.CHILD;

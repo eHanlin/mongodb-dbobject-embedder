@@ -3,9 +3,14 @@ package tw.com.ehanlin.mde.dsl;
 import com.mongodb.BasicDBList;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
+import tw.com.ehanlin.mde.util.ConcurrentCache;
+import tw.com.ehanlin.mde.util.DataStack;
 import tw.com.ehanlin.mde.util.EmptyObject;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 public class Dsl {
@@ -14,15 +19,6 @@ public class Dsl {
         MAP,
         LIST
     }
-
-    private static String lineSeparator = System.getProperty("line.separator");
-    private static String layerPadding = "  ";
-
-    private List<Action> _actions = new ArrayList();
-    private Map<String, Dsl> _dsls = new LinkedHashMap();
-    private Iterate _iterate = Iterate.MAP;
-    private Dsl _parent;
-    private String _name;
 
     public Dsl() {
 
@@ -41,58 +37,65 @@ public class Dsl {
         appendAction(actions);
     }
 
-    public Object execute(Object resource, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
-        Object source = executeActions(resource, dbMap, cache, parallel);
+    public Object execute(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
+        executeActions(data, dbMap, cache, parallel);
         if(_iterate == Iterate.LIST)
-            return executeIterateList(source, dbMap, cache, parallel);
+            return executeIterateList(data, dbMap, cache, parallel);
         else
-            return executeIterateMap(source, dbMap, cache, parallel);
+            return executeIterateMap(data, dbMap, cache, parallel);
     }
 
-    private Object executeIterateMap(Object source, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
+    private Object executeIterateMap(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
+        Object source = data.getSelf();
         if(source instanceof Map){
+            ConcurrentCache<String, Object> tmp = new ConcurrentCache();
             StreamSupport.stream(_dsls.keySet().spliterator(), parallel).forEach(key -> {
-                ((Map)source).put(key, _dsls.get(key).execute(((Map) source).get(key), dbMap, cache, parallel));
+                Object result = _dsls.get(key).execute(new DataStack(data, ((Map) source).get(key)), dbMap, cache, parallel);
+                tmp.put(key, result);
             });
+            tmp.forEach((k, v) -> ((Map)source).put(k, v));
         }else if(source instanceof List){
+            ConcurrentCache<Integer, Object> tmp = new ConcurrentCache();
             StreamSupport.stream(_dsls.keySet().spliterator(), parallel).forEach(key -> {
-                ((List)source).set(Integer.parseInt(key), _dsls.get(key).execute(((List) source).get(Integer.parseInt(key)), dbMap, cache, parallel));
+                Integer index = Integer.parseInt(key);
+                Object result = _dsls.get(key).execute(new DataStack(data, ((List) source).get(index)), dbMap, cache, parallel);
+                tmp.put(index, result);
             });
+            tmp.forEach((k, v) -> ((List)source).set(k, v));
         }
         return source;
     }
 
-    private Object executeIterateList(Object source, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
+    private Object executeIterateList(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
+        Object source = data.getSelf();
         if(source instanceof Map){
             Map map = (Map) source;
+            ConcurrentCache<Object, Object> tmp = new ConcurrentCache();
             StreamSupport.stream(map.keySet().spliterator(), parallel).forEach(key -> {
-                map.put(key, executeIterateMap(map.get(key), dbMap, cache, parallel));
+                tmp.put(key, executeIterateMap(new DataStack(data, map.get(key)), dbMap, cache, parallel));
             });
+            tmp.forEach((k, v) -> map.put(k, v));
         }else if(source instanceof List){
             List list = (List) source;
-            Map<Integer, Object> map = new HashMap();
-            for(Integer i = 0 ; i < list.size() ; i++){
-                map.put(i, list.get(i));
-            }
-            StreamSupport.stream(map.keySet().spliterator(), parallel).forEach(key -> {
-                list.set(key, executeIterateMap(map.get(key), dbMap, cache, parallel));
+            ConcurrentCache<Integer, Object> tmp = new ConcurrentCache();
+            StreamSupport.stream(IntStream.range(0, list.size()).spliterator(), parallel).forEach(index -> {
+                tmp.put(index, executeIterateMap(new DataStack(data, list.get(index)), dbMap, cache, parallel));
             });
+            tmp.forEach((k, v) -> list.set(k, v));
         }else if(source instanceof Iterable){
             BasicDBList list = new BasicDBList();
-            Map<Integer, Object> map = new HashMap();
-            Iterator iterator = ((Iterable) source).iterator();
-            Integer index = 0;
-            while (iterator.hasNext()){
-                map.put(index, iterator.next());
-                index++;
-            }
-            StreamSupport.stream(map.keySet().spliterator(), parallel).forEach(key -> {
-                list.set(key, executeIterateMap(map.get(key), dbMap, cache, parallel));
+            ((Iterable)source).forEach(item -> list.add(item));
+            ConcurrentCache<Integer, Object> tmp = new ConcurrentCache();
+            StreamSupport.stream(IntStream.range(0, list.size()).spliterator(), parallel).forEach(index -> {
+                tmp.put(index, executeIterateMap(new DataStack(data, list.get(index)), dbMap, cache, parallel));
             });
+            tmp.forEach((k, v) -> list.set(k, v));
             return list;
         }else{
             BasicDBList list = new BasicDBList();
-            list.add(executeIterateMap(source, dbMap, cache, parallel));
+            list.add(source);
+            DataStack listData = new DataStack(data.getParent(), list);
+            list.set(0, executeIterateMap(new DataStack(listData, source), dbMap, cache, parallel));
             return list;
         }
         return source;
@@ -151,6 +154,20 @@ public class Dsl {
         _iterate = iterate;
     }
 
+
+
+
+    private static String lineSeparator = System.getProperty("line.separator");
+    private static String layerPadding = "  ";
+
+    private List<Action> _actions = new ArrayList();
+    private Map<String, Dsl> _dsls = new LinkedHashMap();
+    private Iterate _iterate = Iterate.MAP;
+    private Dsl _parent;
+    private String _name;
+
+
+
     private String toString(String key, String padding) {
         StringBuilder result = new StringBuilder();
         for(Action action : _actions){
@@ -184,11 +201,9 @@ public class Dsl {
         return result.toString();
     }
 
-    private Object executeActions(Object resource, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
-        Object source = resource;
+    private void executeActions(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
         for(Action action : _actions) {
-            source = action.execute(resource, dbMap, cache, parallel);
+            action.execute(data, dbMap, cache, parallel);
         }
-        return source;
     }
 }

@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import tw.com.ehanlin.mde.dsl.Dsl;
 import tw.com.ehanlin.mde.dsl.DslParser;
+import tw.com.ehanlin.mde.util.DataStack;
 import tw.com.ehanlin.mde.util.DuplicateConcurrentHashMap;
 
 public class MongoEmbedder {
@@ -36,7 +37,7 @@ public class MongoEmbedder {
 
     public Object embed(Object resource, Dsl dsl) {
         System.out.println("\r\n< embed >\r\n[ resource ]\r\n"+resource+"\r\n[ dsl ]\r\n"+dsl);
-        return dsl.execute(resource, dbMap, new ConcurrentHashMap(), false);
+        return dsl.execute(new DataStack(null, resource), dbMap, new ConcurrentHashMap(), false);
     }
 
     public void register(String key, DB db){
@@ -49,7 +50,7 @@ public class MongoEmbedder {
     public static class DuplicateMongoEmbedder extends MongoEmbedder {
         @Override
         public Object embed(Object resource, Dsl dsl) {
-            return dsl.execute(resource, dbMap, new DuplicateConcurrentHashMap(), false);
+            return dsl.execute(new DataStack(null, resource), dbMap, new DuplicateConcurrentHashMap(), false);
         }
     }
 

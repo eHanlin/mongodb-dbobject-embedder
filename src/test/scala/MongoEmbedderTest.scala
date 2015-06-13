@@ -12,7 +12,7 @@ import org.specs2._
 import tw.com.ehanlin.mde.MongoEmbedder
 
 class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2"""
-  check root findOneById                          $checkRootFindOneById
+  check findOneById                           $checkFindOneById
 """
 
   val port = 12345
@@ -20,12 +20,29 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
   var mongo : Mongo = null
 
 
-  def checkRootFindOneById = {
+  def checkFindOneById = {
     val dsl = """
                 |@findOneById [db=info, coll=video]
                 |[
                 |   @findOneById <db=info, coll=subject, projection={name:1}>
                 |   subject
+                |]
+              """.stripMargin
+    val list = new BasicDBList()
+    list.addAll(List("video_PC_1_1", "video_PC_2_1", "video_PC_2_2", "video_PC_3_1"))
+    val result = MongoEmbedder.instance.embed(list, dsl)
+    result.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ "unit_PC_1"]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_2_1" , "order" : 2 , "unit" : [ "unit_PC_2"]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_2_2" , "order" : 3 , "unit" : [ "unit_PC_2"]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ "unit_PC_1" , "unit_PC_2" , "unit_PC_3"]}]"""
+  }
+
+  def checkFindOne = {
+    val dsl = """
+                |@findOne [db=info, coll=video, query={_id:@}]
+                |[
+                |   @findOne [db=info, coll=unit, query={_id:@}]
+                |   unit [
+                |     @findOne <db=info, coll=subject, query={code:@}>
+                |     subject
+                |   ]
                 |]
               """.stripMargin
     val list = new BasicDBList()

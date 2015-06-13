@@ -8,6 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DuplicateConcurrentHashMap<K,V> extends ConcurrentHashMap<K,V> {
 
     @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
     public V get(Object key) {
         V result = super.get(key);
         if(result instanceof BasicDBObject){

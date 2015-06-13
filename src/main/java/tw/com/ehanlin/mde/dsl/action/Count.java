@@ -5,6 +5,7 @@ import com.mongodb.DBObject;
 import tw.com.ehanlin.mde.dsl.Action;
 import tw.com.ehanlin.mde.dsl.mongo.AtEvaluator;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
+import tw.com.ehanlin.mde.util.DataStack;
 import tw.com.ehanlin.mde.util.EmptyObject;
 
 public class Count extends Action {
@@ -24,13 +25,13 @@ public class Count extends Action {
     }
 
     @Override
-    protected String cacheKey(Object resource, DBCollection coll) {
-        return "count_"+coll.getFullName()+"_"+AtEvaluator.eval(resource, query()).toString();
+    protected String cacheKey(DataStack data, DBCollection coll) {
+        return "count_"+coll.getFullName()+"_"+AtEvaluator.eval(data, query()).toString();
     }
 
     @Override
-    protected Object executeObject(Object resource, DBCollection coll) {
-        return coll.count(AtEvaluator.eval(resource, query()));
+    protected Object executeObject(DataStack data, DBCollection coll) {
+        return coll.count(AtEvaluator.eval(data, query()));
     }
 
     private MdeDBObject _query;

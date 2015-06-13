@@ -6,6 +6,7 @@ import com.mongodb.DBObject;
 import tw.com.ehanlin.mde.dsl.Action;
 import tw.com.ehanlin.mde.dsl.mongo.AtEvaluator;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBList;
+import tw.com.ehanlin.mde.util.DataStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,14 +29,14 @@ public class Aggregate extends Action {
     }
 
     @Override
-    protected String cacheKey(Object resource, DBCollection coll) {
-        BasicDBList pipes = (BasicDBList)AtEvaluator.eval(resource, pipelines());
+    protected String cacheKey(DataStack data, DBCollection coll) {
+        BasicDBList pipes = (BasicDBList)AtEvaluator.eval(data, pipelines());
         return "aggreate_"+coll.getFullName()+"_"+pipes.toString();
     }
 
     @Override
-    protected Object executeObject(Object resource, DBCollection coll) {
-        BasicDBList pipes = (BasicDBList)AtEvaluator.eval(resource, pipelines());
+    protected Object executeObject(DataStack data, DBCollection coll) {
+        BasicDBList pipes = (BasicDBList)AtEvaluator.eval(data, pipelines());
         List<DBObject> pipeList = new ArrayList();
         pipes.forEach(item -> pipeList.add((DBObject)item));
         BasicDBList result = new BasicDBList();

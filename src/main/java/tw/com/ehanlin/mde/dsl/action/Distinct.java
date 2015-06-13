@@ -4,6 +4,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import tw.com.ehanlin.mde.dsl.mongo.AtEvaluator;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
+import tw.com.ehanlin.mde.util.DataStack;
 
 public class Distinct extends Count {
 
@@ -22,13 +23,13 @@ public class Distinct extends Count {
     }
 
     @Override
-    protected String cacheKey(Object resource, DBCollection coll) {
-        return "distinct_"+coll.getFullName()+"_"+key()+"_"+AtEvaluator.eval(resource, query()).toString();
+    protected String cacheKey(DataStack data, DBCollection coll) {
+        return "distinct_"+coll.getFullName()+"_"+key()+"_"+AtEvaluator.eval(data, query()).toString();
     }
 
     @Override
-    protected Object executeObject(Object resource, DBCollection coll) {
-        return coll.distinct(key(), AtEvaluator.eval(resource, query()));
+    protected Object executeObject(DataStack data, DBCollection coll) {
+        return coll.distinct(key(), AtEvaluator.eval(data, query()));
     }
 
     private String _key;

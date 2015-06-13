@@ -1,16 +1,20 @@
 package tw.com.ehanlin.mde.dsl;
 
 import com.mongodb.*;
+import tw.com.ehanlin.mde.util.ConcurrentCache;
+import tw.com.ehanlin.mde.util.DataStack;
 import tw.com.ehanlin.mde.util.EmptyObject;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 public abstract class Action {
 
     public enum Scope {
         PARENT,
-        SALF,
+        SELF,
         CHILD
     }
 
@@ -36,61 +40,73 @@ public abstract class Action {
         return _dsl;
     }
 
-    public Object execute(Object resource, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
+    public void execute(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
         DBCollection coll = dbMap.get(db()).getCollection(coll());
         switch(scope()) {
+            case CHILD :
+                data.setSelf(executeCollectionWithCache(data, coll, cache, parallel));
+                break;
             case PARENT :
-                return executeObjectWithCache(resource, coll, cache);
-            case SALF : {
-                if(resource instanceof Map && _dsl.name() != null) {
-                    return executeObjectWithCache(((Map) resource).get(_dsl.name()), coll, cache);
+                if(data.hasParent()){
+                    data.setSelf(executeObjectWithCache(data.getParent(), coll, cache));
+                }else{
+                    data.setSelf(executeObjectWithCache(data, coll, cache));
                 }
-                if(resource instanceof List && _dsl.name() != null){
-                    return executeObjectWithCache(((List) resource).get(Integer.parseInt(_dsl.name())), coll, cache);
-                }
-                return executeObjectWithCache(resource, coll, cache);
-            }
-            case CHILD : {
-                if(resource instanceof Map && _dsl.name() != null) {
-                    return executeCollection(((Map)resource).get(_dsl.name()), coll, cache);
-                }
-                if(resource instanceof List && _dsl.name() != null){
-                    return executeCollection(((List) resource).get(Integer.parseInt(_dsl.name())), coll, cache);
-                }
-                return executeCollection(resource, coll, cache);
-            }
-            default :
-                return executeObjectWithCache(resource, coll, cache);
+                break;
+            case SELF:
+                data.setSelf(executeObjectWithCache(data, coll, cache));
+                break;
         }
     }
 
-    private Object executeCollection(Object resource, DBCollection coll, Map<String, Object> cache) {
-        if(resource instanceof Map) {
-            BasicDBObject result = new BasicDBObject();
-            ((Map) resource).forEach((k, v) -> result.append(k.toString(), executeObjectWithCache(v, coll, cache)));
-            return result;
+    private Object executeCollectionWithCache(DataStack data, DBCollection coll, Map<String, Object> cache, Boolean parallel) {
+        Object source = data.getSelf();
+        if(source instanceof Map){
+            Map map = (Map) source;
+            ConcurrentCache<Object, Object> tmp = new ConcurrentCache();
+            StreamSupport.stream(map.keySet().spliterator(), parallel).forEach(key -> {
+                tmp.put(key, executeObjectWithCache(new DataStack(data, map.get(key)), coll, cache));
+            });
+            tmp.forEach((k, v) -> map.put(k, v));
+        }else if(source instanceof List){
+            List list = (List) source;
+            ConcurrentCache<Integer, Object> tmp = new ConcurrentCache();
+            StreamSupport.stream(IntStream.range(0, list.size()).spliterator(), parallel).forEach(index -> {
+                tmp.put(index, executeObjectWithCache(new DataStack(data, list.get(index)), coll, cache));
+            });
+            tmp.forEach((k, v) -> list.set(k, v));
+        }else if(source instanceof Iterable){
+            BasicDBList list = new BasicDBList();
+            ((Iterable)source).forEach(item -> list.add(item));
+            ConcurrentCache<Integer, Object> tmp = new ConcurrentCache();
+            StreamSupport.stream(IntStream.range(0, list.size()).spliterator(), parallel).forEach(index -> {
+                tmp.put(index, executeObjectWithCache(new DataStack(data, list.get(index)), coll, cache));
+            });
+            tmp.forEach((k, v) -> list.set(k, v));
+            return list;
+        }else{
+            BasicDBList list = new BasicDBList();
+            list.add(source);
+            DataStack listData = new DataStack(data.getParent(), list);
+            list.set(0, executeObjectWithCache(new DataStack(listData, source), coll, cache));
+            return list;
         }
-        if(resource instanceof Iterable) {
-            BasicDBList result = new BasicDBList();
-            ((Iterable)resource).forEach(item -> result.add(executeObjectWithCache(item, coll, cache)));
-            return result;
-        }
-        return executeObjectWithCache(resource, coll, cache);
+        return source;
     }
 
-    private Object executeObjectWithCache(Object resource, DBCollection coll, Map<String, Object> cache) {
-        String key = cacheKey(resource, coll);
+    private Object executeObjectWithCache(DataStack data, DBCollection coll, Map<String, Object> cache) {
+        String key = cacheKey(data, coll);
         if(!cache.containsKey(key)){
-            Object result = executeObject(resource, coll);
+            Object result = executeObject(data, coll);
             cache.put(key, (result != null) ? result : EmptyObject.Null);
         }
         Object result = cache.get(key);
         return (result != EmptyObject.Null) ? result : null;
     }
 
-    protected abstract String cacheKey(Object resource, DBCollection coll);
+    protected abstract String cacheKey(DataStack data, DBCollection coll);
 
-    protected abstract Object executeObject(Object resource, DBCollection coll);
+    protected abstract Object executeObject(DataStack data, DBCollection coll);
 
     protected String toString(String name, Object... args) {
         StringBuilder result = new StringBuilder("@");
@@ -101,7 +117,7 @@ public abstract class Action {
                 appendInfo(result, args);
                 result.append(" )");
                 break;
-            case SALF :
+            case SELF:
                 result.append(" <");
                 appendInfo(result, args);
                 result.append(" >");

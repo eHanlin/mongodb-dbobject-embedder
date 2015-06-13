@@ -1,17 +1,23 @@
 package tw.com.ehanlin.mde.dsl.mongo;
 
+import tw.com.ehanlin.mde.util.DataStack;
+
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 public class At {
 
+    private static final String _parent = "(<[{parent}]>)";
+    private static final String _parentRegex = "\\./";
+    private static final String _childRegex = "\\.";
+
     private String _at;
     private String[] _keys;
 
     public At(String at) {
         _at = at;
-        _keys = _at.split(".");
+        _keys = at.replaceAll(_parentRegex, _parent).split(_childRegex);
     }
 
     @Override
@@ -19,19 +25,25 @@ public class At {
         return _at;
     }
 
-    public Object eval(Object resource) {
+    public Object eval(DataStack data) {
         if(_keys.length <= 1)
-            return resource;
+            return data.getSelf();
 
-        Object source = resource;
+        DataStack currentData = data;
         for(int i=1 ; i<_keys.length ; i++) {
-            if(source instanceof Map) {
-                source = ((Map) source).get(_keys[i]);
-            }else if(source instanceof List) {
-                source = ((List) source).get(Integer.parseInt(_keys[i]));
+            Object self = currentData.getSelf();
+            String key = _keys[i];
+            if(key.equals(_parent)){
+                currentData = currentData.getParent();
+            }else{
+                if(self instanceof Map) {
+                    currentData = new DataStack(currentData, ((Map)self).get(key));
+                }else if(self instanceof List) {
+                    currentData = new DataStack(currentData, ((List)self).get(Integer.parseInt(key)));
+                }
             }
         }
 
-        return source;
+        return currentData.getSelf();
     }
 }
