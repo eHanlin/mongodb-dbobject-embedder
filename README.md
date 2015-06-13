@@ -6,10 +6,10 @@
 ```
 //用傳入的 String List 中的 Task id 填充 Task
 @findOneById [db=user, coll=Task, projection={unit:true}]
-{
+<
 
   @findOneById [db=info, coll=Unit, projection={createDate:0}]
-  unit {
+  unit <
 
     @findOne <query={_id:@}>
     subject
@@ -26,14 +26,14 @@
       
     ]
 
-  }
+  >
   
-  video {
+  video <
   
     @findOne <query={_id:@}>
     subject
         
-  }
+  >
   
   knowledge [
     
@@ -50,7 +50,7 @@
     
   ]
 
-}
+>
 ```
 
 ## 支援的操作

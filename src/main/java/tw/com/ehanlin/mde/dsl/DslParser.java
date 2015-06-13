@@ -41,9 +41,9 @@ public class DslParser {
                         actions.add(action);
                     }
                     break;
-                case "{" :
+                case "<" :
                 case "[" :
-                    Dsl result = (matcher.match().equals("{")) ? new Dsl(Dsl.Iterate.MAP, actions) : new Dsl(Dsl.Iterate.LIST, actions);
+                    Dsl result = (matcher.match().equals("<")) ? new Dsl(Dsl.Iterate.MAP, actions) : new Dsl(Dsl.Iterate.LIST, actions);
                     parseContent(result, reader);
                     cache.put(dsl, result);
                     return result;
@@ -57,8 +57,8 @@ public class DslParser {
 
 
 
-    private List<String> rootSymbols = Arrays.asList("@", "{", "[");
-    private List<String> readActionOrPropertySymbols = Arrays.asList("@", "{", "[", "}", "]");
+    private List<String> rootSymbols = Arrays.asList("@", "<", "[");
+    private List<String> readActionOrPropertySymbols = Arrays.asList("@", "<", "[", ">", "]");
     private List<String> actionScopeSymbols = Arrays.asList("(", "<", "[");
     private List<String> actionInfoSymbols = Arrays.asList("=", ",", "[", "{", ")", ">", "]");
     private List<String> mongoSymbols = Arrays.asList(":", ",", "{", "[", "]", "}");
@@ -84,15 +84,15 @@ public class DslParser {
                 case "@" :
                     actions.add(parseAction(reader));
                     break;
-                case "{" :
+                case "<" :
                 case "[" :
-                    if(matcher.match().equals("{"))
+                    if(matcher.match().equals("<"))
                         lastDsl.changeIterate(Dsl.Iterate.MAP);
                     else
                         lastDsl.changeIterate(Dsl.Iterate.LIST);
                     parseContent(lastDsl, reader);
                     break;
-                case "}" :
+                case ">" :
                 case "]" :
                     break loop;
             }

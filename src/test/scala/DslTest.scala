@@ -8,10 +8,10 @@ class DslTest extends Specification {def is = s2"""
   def checkBasic = {
     val dsl = DslParser.instance.parse(
       """@findOneById [db=user, coll=Task, projection={unit:true}]
-        |{
+        |<
         |
         |  @findOneById [db=info, coll=Unit, projection={createDate:0}]
-        |  unit {
+        |  unit <
         |
         |    @findOne <query={_id:@}>
         |    subject
@@ -28,14 +28,14 @@ class DslTest extends Specification {def is = s2"""
         |
         |    ]
         |
-        |  }
+        |  >
         |
-        |  video {
+        |  video <
         |
         |    @findOne <query={_id:@}>
         |    subject
         |
-        |  }
+        |  >
         |
         |  knowledge [
         |
@@ -52,11 +52,11 @@ class DslTest extends Specification {def is = s2"""
         |
         |  ]
         |
-        |}""".stripMargin)
+        |>""".stripMargin)
     dsl.toString must_== """@findOneById [ db=user, coll=Task, projection={ "unit" : true} ]
-                           |{
+                           |<
                            |  @findOneById [ db=info, coll=Unit, projection={ "createDate" : 0} ]
-                           |  unit  {
+                           |  unit  <
                            |    @findOne < query={ "_id" : @}, projection={ } >
                            |    subject
                            |    @distinct ( coll=Video, key=subject, query={ "subject" : "PC" , "knowledge" : { "$in" : @.knowledge}} )
@@ -67,11 +67,11 @@ class DslTest extends Specification {def is = s2"""
                            |      @findOneById < projection={ } >
                            |      subject
                            |    ]
-                           |  }
-                           |  video  {
+                           |  >
+                           |  video  <
                            |    @findOne < query={ "_id" : @}, projection={ } >
                            |    subject
-                           |  }
+                           |  >
                            |  knowledge  [
                            |    @findOne < query={ "_id" : @}, projection={ } >
                            |    subject
@@ -81,7 +81,7 @@ class DslTest extends Specification {def is = s2"""
                            |      subject
                            |    ]
                            |  ]
-                           |}""".stripMargin
+                           |>""".stripMargin
   }
 
 }

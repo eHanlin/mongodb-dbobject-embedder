@@ -184,7 +184,7 @@ public class Dsl {
         if(!_dsls.isEmpty()){
             result.append(padding);
             if(_iterate == Iterate.MAP)
-                result.append("{");
+                result.append("<");
             else
                 result.append("[");
             result.append(lineSeparator);
@@ -195,7 +195,7 @@ public class Dsl {
             });
             result.append(padding);
             if(_iterate == Iterate.MAP)
-                result.append("}");
+                result.append(">");
             else
                 result.append("]");
         }
