@@ -7,6 +7,7 @@ import tw.com.ehanlin.mde.util.EmptyObject;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
@@ -59,50 +60,7 @@ public abstract class Action {
         }
     }
 
-    private Object executeCollectionWithCache(DataStack data, DBCollection coll, Map<String, Object> cache, Boolean parallel) {
-        Object source = data.getSelf();
-        if(source instanceof Map){
-            Map map = (Map) source;
-            ConcurrentCache<Object, Object> tmp = new ConcurrentCache();
-            StreamSupport.stream(map.keySet().spliterator(), parallel).forEach(key -> {
-                tmp.put(key, executeObjectWithCache(new DataStack(data, map.get(key)), coll, cache));
-            });
-            tmp.forEach((k, v) -> map.put(k, v));
-        }else if(source instanceof List){
-            List list = (List) source;
-            ConcurrentCache<Integer, Object> tmp = new ConcurrentCache();
-            StreamSupport.stream(IntStream.range(0, list.size()).spliterator(), parallel).forEach(index -> {
-                tmp.put(index, executeObjectWithCache(new DataStack(data, list.get(index)), coll, cache));
-            });
-            tmp.forEach((k, v) -> list.set(k, v));
-        }else if(source instanceof Iterable){
-            BasicDBList list = new BasicDBList();
-            ((Iterable)source).forEach(item -> list.add(item));
-            ConcurrentCache<Integer, Object> tmp = new ConcurrentCache();
-            StreamSupport.stream(IntStream.range(0, list.size()).spliterator(), parallel).forEach(index -> {
-                tmp.put(index, executeObjectWithCache(new DataStack(data, list.get(index)), coll, cache));
-            });
-            tmp.forEach((k, v) -> list.set(k, v));
-            return list;
-        }else{
-            BasicDBList list = new BasicDBList();
-            list.add(source);
-            DataStack listData = new DataStack(data.getParent(), list);
-            list.set(0, executeObjectWithCache(new DataStack(listData, source), coll, cache));
-            return list;
-        }
-        return source;
-    }
 
-    private Object executeObjectWithCache(DataStack data, DBCollection coll, Map<String, Object> cache) {
-        String key = cacheKey(data, coll);
-        if(!cache.containsKey(key)){
-            Object result = executeObject(data, coll);
-            cache.put(key, (result != null) ? result : EmptyObject.Null);
-        }
-        Object result = cache.get(key);
-        return (result != EmptyObject.Null) ? result : null;
-    }
 
     protected abstract String cacheKey(DataStack data, DBCollection coll);
 
@@ -129,6 +87,52 @@ public abstract class Action {
                 break;
         }
         return result.toString();
+    }
+
+
+
+    private void excuteListData(DataStack data, DBCollection coll, Map<String, Object> cache, Boolean parallel) {
+        List list = (List) data.getSelf();
+        ConcurrentCache<Integer, Object> tmp = new ConcurrentCache();
+        StreamSupport.stream(IntStream.range(0, list.size()).spliterator(), parallel).forEach(index -> {
+            tmp.put(index, executeObjectWithCache(new DataStack(data, list.get(index)), coll, cache));
+        });
+        tmp.forEach((k, v) -> list.set(k, v));
+    }
+
+    private Object executeCollectionWithCache(DataStack data, DBCollection coll, Map<String, Object> cache, Boolean parallel) {
+        Object source = data.getSelf();
+        if(source instanceof Map){
+            Map map = (Map) source;
+            ConcurrentCache<Object, Object> tmp = new ConcurrentCache();
+            StreamSupport.stream(map.keySet().spliterator(), parallel).forEach(key -> {
+                tmp.put(key, executeObjectWithCache(new DataStack(data, map.get(key)), coll, cache));
+            });
+            tmp.forEach((k, v) -> map.put(k, v));
+        }else if(source instanceof List){
+            excuteListData(data, coll, cache, parallel);
+        }else if(source instanceof Iterable){
+            BasicDBList list = new BasicDBList();
+            ((Iterable)source).forEach(item -> list.add(item));
+            excuteListData(new DataStack(data.getParent(), list), coll, cache, parallel);
+            return list;
+        }else{
+            BasicDBList list = new BasicDBList();
+            list.add(source);
+            excuteListData(new DataStack(data.getParent(), list), coll, cache, parallel);
+            return list;
+        }
+        return source;
+    }
+
+    private Object executeObjectWithCache(DataStack data, DBCollection coll, Map<String, Object> cache) {
+        String key = cacheKey(data, coll);
+        if(!cache.containsKey(key)){
+            Object result = executeObject(data, coll);
+            cache.put(key, (result != null) ? result : EmptyObject.Null);
+        }
+        Object result = cache.get(key);
+        return (result != EmptyObject.Null) ? result : null;
     }
 
     private void appendInfo(StringBuilder result, Object[] args) {
