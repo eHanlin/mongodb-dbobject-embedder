@@ -11,17 +11,17 @@ import tw.com.ehanlin.mde.util.DuplicateConcurrentHashMap;
 
 public class MongoEmbedder {
 
-    public static final MongoEmbedder instance = new MongoEmbedder();
-    public static final MongoEmbedder duplicate = new DuplicateMongoEmbedder();
+    public static final MongoEmbedder instance = new DuplicateMongoEmbedder();
+    public static final MongoEmbedder noDuplicate = new MongoEmbedder();
 
     public static void registerDB(DB db) {
         instance.register(_defaultKey, db);
-        duplicate.register(_defaultKey, db);
+        noDuplicate.register(_defaultKey, db);
     }
 
     public static void registerDB(String key, DB db) {
         instance.register(key, db);
-        duplicate.register(key, db);
+        noDuplicate.register(key, db);
     }
 
     private static String _defaultKey = "_default";

@@ -38,7 +38,11 @@ public class Dsl {
     }
 
     public Object execute(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
-        executeActions(data, dbMap, cache, parallel);
+
+        for(Action action : _actions) {
+            action.execute(data, dbMap, cache, parallel);
+        }
+
         if(_iterate == Iterate.LIST)
             return executeIterateList(data, dbMap, cache, parallel);
         else
@@ -201,9 +205,4 @@ public class Dsl {
         return result.toString();
     }
 
-    private void executeActions(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
-        for(Action action : _actions) {
-            action.execute(data, dbMap, cache, parallel);
-        }
-    }
 }

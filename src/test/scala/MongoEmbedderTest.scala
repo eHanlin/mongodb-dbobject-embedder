@@ -13,6 +13,7 @@ import tw.com.ehanlin.mde.MongoEmbedder
 
 class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2"""
   check findOneById                           $checkFindOneById
+  check findOne                          $checkFindOne
 """
 
   val port = 12345
@@ -38,9 +39,11 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
     val dsl = """
                 |@findOne [db=info, coll=video, query={_id:@}]
                 |[
+                |   @findOne <db=info, coll=subject, query={_id:@}>
+                |   subject
                 |   @findOne [db=info, coll=unit, query={_id:@}]
                 |   unit [
-                |     @findOne <db=info, coll=subject, query={code:@}>
+                |     @findOne <db=info, coll=subject, query={code:@,subject}, projection={name:1}>
                 |     subject
                 |   ]
                 |]
@@ -48,8 +51,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
     val list = new BasicDBList()
     list.addAll(List("video_PC_1_1", "video_PC_2_1", "video_PC_2_2", "video_PC_3_1"))
     val result = MongoEmbedder.instance.embed(list, dsl)
-    println(result)
-    ok
+    result.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第一課" , "order" : 1}]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_1" , "order" : 2 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_2" , "order" : 3 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第一課" , "order" : 1} , { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2} , { "_id" : "unit_PC_3" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第三課" , "order" : 3}]}]"""
   }
 
 
