@@ -56,11 +56,10 @@ public class DslParser {
 
 
 
-
     private List<String> rootSymbols = Arrays.asList("@", "<", "[");
     private List<String> readActionOrPropertySymbols = Arrays.asList("@", "<", "[", ">", "]");
     private List<String> actionScopeSymbols = Arrays.asList("(", "<", "[");
-    private List<String> actionInfoSymbols = Arrays.asList("=", ",", "[", "{", ")", ">", "]");
+    private List<String> actionInfoSymbols = Arrays.asList("=", ",", " ", "\b", "\f", "\t", "\r", "\n", "[", "{", ")", ">", "]");
     private List<String> mongoSymbols = Arrays.asList(":", ",", "{", "[", "]", "}");
     private Pattern propertyPattern = Pattern.compile("\\S+");
     private Pattern stringPattern = Pattern.compile("^(?:'(.*)'|\"(.*)\")$");
@@ -238,6 +237,12 @@ public class DslParser {
                 case "=" :
                     currentKey = matcher.prefix().trim();
                     break;
+                case " " :
+                case "\b" :
+                case "\f" :
+                case "\t" :
+                case "\r" :
+                case "\n" :
                 case "," : {
                     String value = matcher.prefix().trim();
                     if (currentKey != null && value.length() > 0) {

@@ -136,17 +136,12 @@ public abstract class Action {
     }
 
     private void appendInfo(StringBuilder result, Object[] args) {
-        Boolean more = false;
         for(int i=0 ; i<args.length ; i += 2) {
             if(args[i+1] != null){
-                if(more){
-                    result.append(",");
-                }
                 result.append(" ");
                 result.append(args[i]);
                 result.append("=");
                 result.append(args[i+1]);
-                more = true;
             }
         }
     }

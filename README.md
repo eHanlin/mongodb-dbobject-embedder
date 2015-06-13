@@ -14,7 +14,7 @@
     @findOne <query={_id:@}>
     subject
 
-    @distinct (coll=Video, key=subject, query={subject:'PC',knowledge:{$in:@.knowledge}})
+    @distinct (coll=Video key=subject query={subject:'PC',knowledge:{$in:@.knowledge}})
     @findOneById [coll=subject]
     videoSubject
     
