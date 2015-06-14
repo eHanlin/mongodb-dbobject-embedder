@@ -6,6 +6,7 @@ import com.mongodb.DBObject;
 import tw.com.ehanlin.mde.dsl.Action;
 import tw.com.ehanlin.mde.dsl.mongo.AtEvaluator;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBList;
+import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 import tw.com.ehanlin.mde.util.DataStack;
 
 import java.util.ArrayList;
@@ -14,9 +15,9 @@ import java.util.Map;
 
 public class Aggregate extends Action {
 
-    public Aggregate(Scope scope, String db, String coll, MdeDBList pipelines) {
-        super(scope, db, coll);
-        _pipelines = pipelines;
+    public Aggregate(Scope scope, MdeDBObject infos) {
+        super(scope, infos);
+        _pipelines = (MdeDBList)infos.get("pipelines");
     }
 
     public MdeDBList pipelines() {

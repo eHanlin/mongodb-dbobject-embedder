@@ -9,8 +9,8 @@ import tw.com.ehanlin.mde.util.DataStack;
 
 public class FindOne extends Find {
 
-    public FindOne(Scope scope, String db, String coll, MdeDBObject query, MdeDBObject projection) {
-        super(scope, db, coll, query, projection);
+    public FindOne(Scope scope, MdeDBObject infos) {
+        super(scope, infos);
     }
 
     @Override

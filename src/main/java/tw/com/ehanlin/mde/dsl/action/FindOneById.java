@@ -7,8 +7,13 @@ public class FindOneById extends FindOne {
 
     private static MdeDBObject query = new MdeDBObject("_id", new At("@"));
 
-    public FindOneById(Scope scope, String db, String coll, MdeDBObject projection) {
-        super(scope, db, coll, query, projection);
+    public FindOneById(Scope scope, MdeDBObject infos) {
+        super(scope, infos);
+    }
+
+    @Override
+    public MdeDBObject query() {
+        return (MdeDBObject)query.copy();
     }
 
     @Override

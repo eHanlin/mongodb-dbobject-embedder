@@ -19,6 +19,21 @@ public class DslParser {
 
     public static DslParser instance = new DslParser();
 
+    private ConcurrentHashMap<String, Class<? extends Action>> actionMap = new ConcurrentHashMap();
+
+    public DslParser() {
+        registerAction("find", Find.class);
+        registerAction("findOne", FindOne.class);
+        registerAction("findOneById", FindOneById.class);
+        registerAction("distinct", Distinct.class);
+        registerAction("count", Count.class);
+        registerAction("aggregate", Aggregate.class);
+    }
+
+    public void registerAction(String key, Class<? extends Action> type) {
+        actionMap.put(key, type);
+    }
+
     public Dsl parse(String dsl) {
 
         if(cache.containsKey(dsl)){
@@ -302,22 +317,11 @@ public class DslParser {
 
         MdeDBObject infos = parseActionInfo(reader);
 
-        switch(actionName){
-            case "find" :
-                return new Find(scope, (String)infos.get("db"), (String)infos.get("coll"), (MdeDBObject)infos.get("query"), (MdeDBObject)infos.get("projection"));
-            case "findOne" :
-                return new FindOne(scope, (String)infos.get("db"), (String)infos.get("coll"), (MdeDBObject)infos.get("query"), (MdeDBObject)infos.get("projection"));
-            case "findOneById" :
-                return new FindOneById(scope, (String)infos.get("db"), (String)infos.get("coll"), (MdeDBObject)infos.get("projection"));
-            case "distinct" :
-                return new Distinct(scope, (String)infos.get("db"), (String)infos.get("coll"), (String)infos.get("key"), (MdeDBObject)infos.get("query"));
-            case "count" :
-                return new Count(scope, (String)infos.get("db"), (String)infos.get("coll"), (MdeDBObject)infos.get("query"));
-            case "aggregate" :
-                return new Aggregate(scope, (String)infos.get("db"), (String)infos.get("coll"), (MdeDBList)infos.get("pipelines"));
+        try{
+            return actionMap.get(actionName).getDeclaredConstructor(Action.Scope.class, MdeDBObject.class).newInstance(scope, infos);
+        }catch(Exception ex){
+            throw new IllegalArgumentException(actionName+" is not support action.");
         }
-
-        return null;
     }
 
     private Map<String, Dsl> cache = new ConcurrentHashMap();

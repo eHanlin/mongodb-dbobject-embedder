@@ -11,8 +11,9 @@ import tw.com.ehanlin.mde.util.EmptyObject;
 
 public class Find extends Count {
 
-    public Find(Scope scope, String db, String coll, MdeDBObject query, MdeDBObject projection) {
-        super(scope, db, coll, query);
+    public Find(Scope scope, MdeDBObject infos) {
+        super(scope, infos);
+        MdeDBObject projection = (MdeDBObject)infos.get("projection");
         _projection = (projection != null) ? projection : EmptyObject.MdeDBObject;
     }
 

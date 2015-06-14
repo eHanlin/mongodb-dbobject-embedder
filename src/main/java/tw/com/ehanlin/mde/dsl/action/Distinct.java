@@ -8,9 +8,9 @@ import tw.com.ehanlin.mde.util.DataStack;
 
 public class Distinct extends Count {
 
-    public Distinct(Scope scope, String db, String coll, String key, MdeDBObject query) {
-        super(scope, db, coll, query);
-        _key = key;
+    public Distinct(Scope scope, MdeDBObject infos) {
+        super(scope, infos);
+        _key = (String)infos.get("key");
     }
 
     public String key() {

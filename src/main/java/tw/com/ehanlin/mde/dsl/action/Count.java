@@ -10,8 +10,9 @@ import tw.com.ehanlin.mde.util.EmptyObject;
 
 public class Count extends Action {
 
-    public Count(Scope scope, String db, String coll, MdeDBObject query) {
-        super(scope, db, coll);
+    public Count(Scope scope, MdeDBObject infos) {
+        super(scope, infos);
+        MdeDBObject query = (MdeDBObject)infos.get("query");
         _query = (query != null) ? query : EmptyObject.MdeDBObject;
     }
 

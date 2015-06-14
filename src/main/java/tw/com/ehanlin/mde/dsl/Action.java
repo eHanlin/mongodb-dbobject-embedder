@@ -1,6 +1,7 @@
 package tw.com.ehanlin.mde.dsl;
 
 import com.mongodb.*;
+import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 import tw.com.ehanlin.mde.util.ConcurrentCache;
 import tw.com.ehanlin.mde.util.DataStack;
 import tw.com.ehanlin.mde.util.EmptyObject;
@@ -19,10 +20,10 @@ public abstract class Action {
         CHILD
     }
 
-    public Action(Scope scope, String db, String coll) {
-        _db = db;
-        _coll = coll;
+    public Action(Scope scope, MdeDBObject infos) {
         _scope = scope;
+        _db = (String)infos.get("db");
+        _coll = (String)infos.get("coll");
     }
 
     public Scope scope() {
