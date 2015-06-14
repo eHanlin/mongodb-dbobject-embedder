@@ -10,10 +10,6 @@ public class MdeDBObject extends BasicDBObject {
     public MdeDBObject() {
     }
 
-    public MdeDBObject(int size) {
-        super(size);
-    }
-
     public MdeDBObject(String key, Object value) {
         super(key, value);
     }

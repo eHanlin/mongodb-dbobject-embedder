@@ -41,6 +41,9 @@ public class Dsl {
             action.execute(data, dbMap, cache, parallel);
         }
 
+        if(_dsls.isEmpty() && !isNest())
+            return data.getSelf();
+
         if(_iterate == Iterate.LIST)
             return executeIterateList(data, dbMap, cache, parallel);
         else
@@ -161,9 +164,7 @@ public class Dsl {
             if(source instanceof Map){
                 excuteMapDataWithSpliterator(data, parallel, _dsls.keySet().spliterator(), (key, childData) -> _dsls.get(key).execute(childData, dbMap, cache, parallel));
             }else if(source instanceof List){
-                excuteListDataWithSpliterator(data, parallel, _dsls.keySet().stream().map(item -> Integer.parseInt(item)).spliterator(), (key, childData) -> {
-                    return _dsls.get(key.toString()).execute(childData, dbMap, cache, parallel);
-                });
+                excuteListDataWithSpliterator(data, parallel, _dsls.keySet().stream().map(item -> Integer.parseInt(item)).spliterator(), (key, childData) -> _dsls.get(key.toString()).execute(childData, dbMap, cache, parallel));
             }
         }
         return source;

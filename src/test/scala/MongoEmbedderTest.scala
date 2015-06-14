@@ -15,6 +15,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
   checkFindOneById                            $checkFindOneById
   checkFindOne                                $checkFindOne
   checkFind                                   $checkFind
+  checkDistinct                               $checkDistinct
 """
 
   val port = 12345
@@ -72,6 +73,22 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
     val result = MongoEmbedder.instance.embed("unit_PC_1", dsl)
     result.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}] , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ [ { "_id" : "unit_PC_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第一課" , "order" : 1}]]} , { "_id" : "video_PC_3_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}] , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ [ { "_id" : "unit_PC_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第一課" , "order" : 1}] , [ { "_id" : "unit_PC_2" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第二課" , "order" : 2}] , [ { "_id" : "unit_PC_3" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第三課" , "order" : 3}]]}]"""
   }
+
+  def checkDistinct = {
+    val dsl =
+      """
+        |@distinct <db=info coll=unit key=subject query={order:{$gte:3}}>
+        |@findOne [db=info coll=subject query={code:@}]
+        |[
+        |   @distinct (db=info coll=video key=_id query={subject:@._id})
+        |   @findOneById [db=info coll=video projection={name:1}]
+        |   video
+        |]
+      """.stripMargin
+    val result = MongoEmbedder.instance.embed(null, dsl)
+    result.toString must_== """[{ "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文" , "video" : [ { "_id" : "video_PC_1_1" , "name" : "video_PC_1_1"} , { "_id" : "video_PC_2_1" , "name" : "video_PC_2_1"} , { "_id" : "video_PC_2_2" , "name" : "video_PC_2_2"} , { "_id" : "video_PC_3_1" , "name" : "video_PC_3_1"}]}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語" , "video" : [ ]}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學" , "video" : [ ]}]"""
+  }
+
 
 
   def beforeAll(): Unit = {
