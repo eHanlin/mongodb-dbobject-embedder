@@ -12,8 +12,9 @@ import org.specs2._
 import tw.com.ehanlin.mde.MongoEmbedder
 
 class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2"""
-  check findOneById                           $checkFindOneById
-  check findOne                          $checkFindOne
+  checkFindOneById                            $checkFindOneById
+  checkFindOne                                $checkFindOne
+  checkFind                                   $checkFind
 """
 
   val port = 12345
@@ -43,7 +44,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
                 |   subject
                 |   @findOne [db=info, coll=unit, query={_id:@}]
                 |   unit [
-                |     @findOne <db=info, coll=subject, query={code:@,subject}, projection={name:1}>
+                |     @findOne <db=info, coll=subject, query={code:@.subject}, projection={name:1}>
                 |     subject
                 |   ]
                 |]
@@ -54,6 +55,23 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
     result.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第一課" , "order" : 1}]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_1" , "order" : 2 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_2" , "order" : 3 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第一課" , "order" : 1} , { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2} , { "_id" : "unit_PC_3" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第三課" , "order" : 3}]}]"""
   }
 
+  def checkFind = {
+    val dsl =
+      """
+        |@find <db=info, coll=video, query={unit:@}>
+        |[
+        |   @find <db=info, coll=subject, query={_id:@}>
+        |   subject
+        |   @find [db=info, coll=unit, query={_id:@}]
+        |   unit [[
+        |     @find <db=info, coll=subject, query={code:@.subject}, projection={name:1}>
+        |     subject
+        |   ]]
+        |]
+      """.stripMargin
+    val result = MongoEmbedder.instance.embed("unit_PC_1", dsl)
+    result.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}] , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ [ { "_id" : "unit_PC_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第一課" , "order" : 1}]]} , { "_id" : "video_PC_3_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}] , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ [ { "_id" : "unit_PC_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第一課" , "order" : 1}] , [ { "_id" : "unit_PC_2" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第二課" , "order" : 2}] , [ { "_id" : "unit_PC_3" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第三課" , "order" : 3}]]}]"""
+  }
 
 
   def beforeAll(): Unit = {
