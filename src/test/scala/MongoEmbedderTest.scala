@@ -16,6 +16,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
   checkFindOne                                $checkFindOne
   checkFind                                   $checkFind
   checkDistinct                               $checkDistinct
+  checkCount                                  $checkCount
 """
 
   val port = 12345
@@ -89,6 +90,19 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
     result.toString must_== """[{ "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文" , "video" : [ { "_id" : "video_PC_1_1" , "name" : "video_PC_1_1"} , { "_id" : "video_PC_2_1" , "name" : "video_PC_2_1"} , { "_id" : "video_PC_2_2" , "name" : "video_PC_2_2"} , { "_id" : "video_PC_3_1" , "name" : "video_PC_3_1"}]}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語" , "video" : [ ]}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學" , "video" : [ ]}]"""
   }
 
+  def checkCount = {
+    val dsl =
+      """
+        |@distinct <db=info coll=unit key=subject query={order:{$gte:3}}>
+        |@findOne [db=info coll=subject query={code:@} projection={name:1}]
+        |[
+        |   @count (db=info coll=video query={subject:@._id})
+        |   num
+        |]
+      """.stripMargin
+    val result = MongoEmbedder.instance.embed(null, dsl)
+    result.toString must_== """[{ "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文" , "num" : 4}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "name" : "英語" , "num" : 0}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "name" : "數學" , "num" : 0}]"""
+  }
 
 
   def beforeAll(): Unit = {
