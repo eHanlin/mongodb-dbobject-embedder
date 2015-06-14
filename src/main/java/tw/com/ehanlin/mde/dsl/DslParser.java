@@ -85,10 +85,13 @@ public class DslParser {
                     break;
                 case "<" :
                 case "[" :
-                    if(matcher.match().equals("<"))
-                        lastDsl.changeIterate(Dsl.Iterate.MAP);
-                    else
-                        lastDsl.changeIterate(Dsl.Iterate.LIST);
+                    if(lastDsl == null){
+                        lastDsl = new Dsl(((matcher.match().equals("<")) ? Dsl.Iterate.MAP : Dsl.Iterate.LIST), actions);
+                        actions = new ArrayList();
+                        current.nestedDsl(lastDsl);
+                    }else{
+                        lastDsl.changeIterate((matcher.match().equals("<")) ? Dsl.Iterate.MAP : Dsl.Iterate.LIST);
+                    }
                     parseContent(lastDsl, reader);
                     break;
                 case ">" :

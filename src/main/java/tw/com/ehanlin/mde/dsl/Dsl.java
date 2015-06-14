@@ -8,7 +8,6 @@ import tw.com.ehanlin.mde.util.EmptyObject;
 
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
@@ -65,11 +64,19 @@ public class Dsl {
         dsl._parent = this;
     }
 
+    public void nestedDsl(Dsl dsl) {
+        _nest = dsl;
+    }
+
+    public Boolean isNest() {
+        return _nest != null;
+    }
+
     public Boolean isEmpty() {
         if(this == EmptyObject.Dsl) {
             return true;
         }
-        return _actions.isEmpty() && _dsls.isEmpty();
+        return _actions.isEmpty() && _dsls.isEmpty() && !isNest();
     }
 
     public List<Action> actions() {
@@ -82,6 +89,10 @@ public class Dsl {
 
     public Map<String, Dsl> dsls() {
         return _dsls;
+    }
+
+    public Dsl nest() {
+        return _nest;
     }
 
     public Dsl parent() {
@@ -109,16 +120,17 @@ public class Dsl {
 
     private List<Action> _actions = new ArrayList();
     private Map<String, Dsl> _dsls = new LinkedHashMap();
+    private Dsl _nest;
     private Iterate _iterate = Iterate.MAP;
     private Dsl _parent;
     private String _name;
 
 
-    private void excuteMapData(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel, BiFunction<Object, DataStack, Object> action) {
-        excuteMapDataWithSpliterator(data, dbMap, cache, parallel, ((Map)data.getSelf()).keySet().spliterator(), action);
+    private void excuteMapData(DataStack data, Boolean parallel, BiFunction<Object, DataStack, Object> action) {
+        excuteMapDataWithSpliterator(data, parallel, ((Map)data.getSelf()).keySet().spliterator(), action);
     }
 
-    private void excuteMapDataWithSpliterator(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel, Spliterator spliterator, BiFunction<Object, DataStack, Object> action) {
+    private void excuteMapDataWithSpliterator(DataStack data, Boolean parallel, Spliterator spliterator, BiFunction<Object, DataStack, Object> action) {
         Map map = (Map) data.getSelf();
         ConcurrentCache<Object, Object> tmp = new ConcurrentCache();
         StreamSupport.stream(spliterator, parallel).forEach(key -> {
@@ -127,11 +139,11 @@ public class Dsl {
         tmp.forEach((k, v) -> map.put(k, v));
     }
 
-    private void excuteListData(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel, BiFunction<Integer, DataStack, Object> action) {
-        excuteListDataWithSpliterator(data, dbMap, cache, parallel, IntStream.range(0, ((List)data.getSelf()).size()).spliterator(), action);
+    private void excuteListData(DataStack data, Boolean parallel, BiFunction<Integer, DataStack, Object> action) {
+        excuteListDataWithSpliterator(data, parallel, IntStream.range(0, ((List)data.getSelf()).size()).spliterator(), action);
     }
 
-    private void excuteListDataWithSpliterator(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel, Spliterator<Integer> spliterator, BiFunction<Integer, DataStack, Object> action) {
+    private void excuteListDataWithSpliterator(DataStack data, Boolean parallel, Spliterator<Integer> spliterator, BiFunction<Integer, DataStack, Object> action) {
         List list = (List) data.getSelf();
         ConcurrentCache<Integer, Object> tmp = new ConcurrentCache();
         StreamSupport.stream(spliterator, parallel).forEach(index -> {
@@ -142,10 +154,17 @@ public class Dsl {
 
     private Object executeIterateMap(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
         Object source = data.getSelf();
-        if(source instanceof Map){
-            excuteMapDataWithSpliterator(data, dbMap, cache, parallel, _dsls.keySet().spliterator(), (key, childData) -> _dsls.get(key).execute(childData, dbMap, cache, parallel));
-        }else if(source instanceof List){
-            excuteListDataWithSpliterator(data, dbMap, cache, parallel, _dsls.keySet().stream().map(item -> Integer.parseInt(item)).spliterator(), (key, childData) -> _dsls.get(key.toString()).execute(childData, dbMap, cache, parallel));
+        if(isNest()){
+            source = _nest.execute(data, dbMap, cache, parallel);
+            data.setSelf(source);
+        }else{
+            if(source instanceof Map){
+                excuteMapDataWithSpliterator(data, parallel, _dsls.keySet().spliterator(), (key, childData) -> _dsls.get(key).execute(childData, dbMap, cache, parallel));
+            }else if(source instanceof List){
+                excuteListDataWithSpliterator(data, parallel, _dsls.keySet().stream().map(item -> Integer.parseInt(item)).spliterator(), (key, childData) -> {
+                    return _dsls.get(key.toString()).execute(childData, dbMap, cache, parallel);
+                });
+            }
         }
         return source;
     }
@@ -153,18 +172,18 @@ public class Dsl {
     private Object executeIterateList(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
         Object source = data.getSelf();
         if(source instanceof Map){
-            excuteMapData(data, dbMap, cache, parallel, (key, childData) -> executeIterateMap(childData, dbMap, cache, parallel));
+            excuteMapData(data, parallel, (key, childData) -> executeIterateMap(childData, dbMap, cache, parallel));
         }else if(source instanceof List){
-            excuteListData(data, dbMap, cache, parallel, (index, childData) -> executeIterateMap(childData, dbMap, cache, parallel));
+            excuteListData(data, parallel, (index, childData) -> executeIterateMap(childData, dbMap, cache, parallel));
         }else if(source instanceof Iterable){
             BasicDBList list = new BasicDBList();
             ((Iterable)source).forEach(item -> list.add(item));
-            excuteListData(new DataStack(data.getParent(), list), dbMap, cache, parallel, (index, childData) -> executeIterateMap(childData, dbMap, cache, parallel));
+            excuteListData(new DataStack(data.getParent(), list), parallel, (index, childData) -> executeIterateMap(childData, dbMap, cache, parallel));
             return list;
         }else{
             BasicDBList list = new BasicDBList();
             list.add(source);
-            excuteListData(new DataStack(data.getParent(), list), dbMap, cache, parallel, (index, childData) -> executeIterateMap(childData, dbMap, cache, parallel));
+            excuteListData(new DataStack(data.getParent(), list), parallel, (index, childData) -> executeIterateMap(childData, dbMap, cache, parallel));
             return list;
         }
         return source;
@@ -180,19 +199,28 @@ public class Dsl {
 
         result.append(padding);
         result.append(key);
+        if(key.length() > 0){
+            result.append(" ");
+        }
 
-        if(!_dsls.isEmpty()){
-            result.append(padding);
+        if(!_dsls.isEmpty() || isNest()){
             if(_iterate == Iterate.MAP)
                 result.append("<");
             else
                 result.append("[");
             result.append(lineSeparator);
             String nextPadding = padding + layerPadding;
-            _dsls.forEach((k, dsl) -> {
-                result.append(dsl.toString(k, nextPadding));
+
+            if(isNest()){
+                result.append(_nest.toString("", nextPadding));
                 result.append(lineSeparator);
-            });
+            }else{
+                _dsls.forEach((k, dsl) -> {
+                    result.append(dsl.toString(k, nextPadding));
+                    result.append(lineSeparator);
+                });
+            }
+
             result.append(padding);
             if(_iterate == Iterate.MAP)
                 result.append(">");
