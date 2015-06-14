@@ -193,7 +193,7 @@ public class DslParser {
                 case "[" :
                     result.add(parseMongoList(reader));
                     break;
-                case "}" : {
+                case "]" : {
                     String value = matcher.prefix().trim();
                     if (value.length() > 0) {
                         result.add(parseMongoContent(value));

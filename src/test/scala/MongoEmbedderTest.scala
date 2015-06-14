@@ -17,6 +17,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
   checkFind                                   $checkFind
   checkDistinct                               $checkDistinct
   checkCount                                  $checkCount
+  checkAggregate                              $checkAggregate
 """
 
   val port = 12345
@@ -102,6 +103,19 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
       """.stripMargin
     val result = MongoEmbedder.instance.embed(null, dsl)
     result.toString must_== """[{ "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文" , "num" : 4}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "name" : "英語" , "num" : 0}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "name" : "數學" , "num" : 0}]"""
+  }
+
+  def checkAggregate = {
+    val dsl =
+      """
+        |@distinct <db=info coll=unit key=subject query={order:{$gte:3}}>
+        |@findOne [db=info coll=subject query={code:@} projection={name:1}]
+        |@aggregate [db=info coll=video pipelines=[{$match:{subject:@._id}},{$group:{_id:@.name,num:{$sum:1}}}]]
+        |[
+        |]
+      """.stripMargin
+    val result = MongoEmbedder.instance.embed(null, dsl)
+    result.toString must_== """[[ { "_id" : "國文" , "num" : 4}], [ ], [ ]]"""
   }
 
 
