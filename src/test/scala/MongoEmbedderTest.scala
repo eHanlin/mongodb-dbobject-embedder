@@ -36,7 +36,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
     val list = new BasicDBList()
     list.addAll(List("video_PC_1_1", "video_PC_2_1", "video_PC_2_2", "video_PC_3_1"))
     val result = MongoEmbedder.instance.embed(list, dsl)
-    result.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ "unit_PC_1"]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_2_1" , "order" : 2 , "unit" : [ "unit_PC_2"]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_2_2" , "order" : 3 , "unit" : [ "unit_PC_2"]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ "unit_PC_1" , "unit_PC_2" , "unit_PC_3"]}]"""
+    result.toString.replaceAll("\\s+", "") must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ "unit_PC_1"]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_2_1" , "order" : 2 , "unit" : [ "unit_PC_2"]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_2_2" , "order" : 3 , "unit" : [ "unit_PC_2"]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ "unit_PC_1" , "unit_PC_2" , "unit_PC_3"]}]""".replaceAll("\\s+", "")
   }
 
   def checkFindOne = {
@@ -55,7 +55,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
     val list = new BasicDBList()
     list.addAll(List("video_PC_1_1", "video_PC_2_1", "video_PC_2_2", "video_PC_3_1"))
     val result = MongoEmbedder.instance.embed(list, dsl)
-    result.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第一課" , "order" : 1}]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_1" , "order" : 2 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_2" , "order" : 3 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第一課" , "order" : 1} , { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2} , { "_id" : "unit_PC_3" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第三課" , "order" : 3}]}]"""
+    result.toString.replaceAll("\\s+", "") must_== """[ { "_id" : "video_PC_1_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第一課" , "order" : 1}]} , { "_id" : "video_PC_2_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_1" , "order" : 2 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_2_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_2_2" , "order" : 3 , "unit" : [ { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2}]} , { "_id" : "video_PC_3_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"} , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ { "_id" : "unit_PC_1" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第一課" , "order" : 1} , { "_id" : "unit_PC_2" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第二課" , "order" : 2} , { "_id" : "unit_PC_3" , "subject" : { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"} , "name" : "第三課" , "order" : 3}]}]""".replaceAll("\\s+", "")
   }
 
   def checkFind = {
@@ -73,7 +73,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
         |]
       """.stripMargin
     val result = MongoEmbedder.instance.embed("unit_PC_1", dsl)
-    result.toString must_== """[ { "_id" : "video_PC_1_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}] , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ [ { "_id" : "unit_PC_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第一課" , "order" : 1}]]} , { "_id" : "video_PC_3_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}] , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ [ { "_id" : "unit_PC_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第一課" , "order" : 1}] , [ { "_id" : "unit_PC_2" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第二課" , "order" : 2}] , [ { "_id" : "unit_PC_3" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第三課" , "order" : 3}]]}]"""
+    result.toString.replaceAll("\\s+", "") must_== """[ { "_id" : "video_PC_1_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}] , "name" : "video_PC_1_1" , "order" : 1 , "unit" : [ [ { "_id" : "unit_PC_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第一課" , "order" : 1}]]} , { "_id" : "video_PC_3_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文"}] , "name" : "video_PC_3_1" , "order" : 4 , "unit" : [ [ { "_id" : "unit_PC_1" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第一課" , "order" : 1}] , [ { "_id" : "unit_PC_2" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第二課" , "order" : 2}] , [ { "_id" : "unit_PC_3" , "subject" : [ { "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文"}] , "name" : "第三課" , "order" : 3}]]}]""".replaceAll("\\s+", "")
   }
 
   def checkDistinct = {
@@ -88,7 +88,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
         |]
       """.stripMargin
     val result = MongoEmbedder.instance.embed(null, dsl)
-    result.toString must_== """[{ "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文" , "video" : [ { "_id" : "video_PC_1_1" , "name" : "video_PC_1_1"} , { "_id" : "video_PC_2_1" , "name" : "video_PC_2_1"} , { "_id" : "video_PC_2_2" , "name" : "video_PC_2_2"} , { "_id" : "video_PC_3_1" , "name" : "video_PC_3_1"}]}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語" , "video" : [ ]}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學" , "video" : [ ]}]"""
+    result.toString.replaceAll("\\s+", "") must_== """[{ "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "code" : "PC" , "name" : "國文" , "video" : [ { "_id" : "video_PC_1_1" , "name" : "video_PC_1_1"} , { "_id" : "video_PC_2_1" , "name" : "video_PC_2_1"} , { "_id" : "video_PC_2_2" , "name" : "video_PC_2_2"} , { "_id" : "video_PC_3_1" , "name" : "video_PC_3_1"}]}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "code" : "EN" , "name" : "英語" , "video" : [ ]}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "code" : "MA" , "name" : "數學" , "video" : [ ]}]""".replaceAll("\\s+", "")
   }
 
   def checkCount = {
@@ -102,7 +102,7 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
         |]
       """.stripMargin
     val result = MongoEmbedder.instance.embed(null, dsl)
-    result.toString must_== """[{ "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文" , "num" : 4}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "name" : "英語" , "num" : 0}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "name" : "數學" , "num" : 0}]"""
+    result.toString.replaceAll("\\s+", "") must_== """[{ "_id" : { "$oid" : "55711d2ad6a23e26b37be430"} , "name" : "國文" , "num" : 4}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be431"} , "name" : "英語" , "num" : 0}, { "_id" : { "$oid" : "55711d2ad6a23e26b37be432"} , "name" : "數學" , "num" : 0}]""".replaceAll("\\s+", "")
   }
 
   def checkAggregate = {
@@ -115,13 +115,13 @@ class MongoEmbedderTest extends Specification with BeforeAfterAll {def is = s2""
         |]
       """.stripMargin
     val result = MongoEmbedder.instance.embed(null, dsl)
-    result.toString must_== """[[ { "_id" : "國文" , "num" : 4}], [ ], [ ]]"""
+    result.toString.replaceAll("\\s+", "") must_== """[[ { "_id" : "國文" , "num" : 4}], [ ], [ ]]""".replaceAll("\\s+", "")
   }
 
 
   def beforeAll(): Unit = {
     mongodExecutable = MongodStarter.getDefaultInstance().prepare(new MongodConfigBuilder()
-      .version(Version.V3_0_1)
+      .version(Version.Main.PRODUCTION)
       .net(new Net(port, Network.localhostIsIPv6()))
       .build())
     val mongod = mongodExecutable.start()
