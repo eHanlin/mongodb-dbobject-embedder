@@ -3,6 +3,7 @@
 
 ## 語法說明
 >執行 db.user.find({ height : { $gte : 210 } })會得到以下的結果
+
 ```
 [
   { "_id" : ObjectId("557e58727a8ea2a9dfe2ef76"), "name" : "Kirk", "postal_code" : ObjectId("557e56287a8ea2a9dfe2ef71"), "height" : 220, "friends" : [ ObjectId("557e58727a8ea2a9dfe2ef74"), ObjectId("557e58727a8ea2a9dfe2ef77"), ObjectId("557e58727a8ea2a9dfe2ef7a"), ObjectId("557e58727a8ea2a9dfe2ef7e") ] },
@@ -10,11 +11,13 @@
   { "_id" : ObjectId("557e58727a8ea2a9dfe2ef7c"), "name" : "Toby", "postal_code" : ObjectId("557e56287a8ea2a9dfe2ef72"), "height" : 214, "friends" : [ ObjectId("557e58727a8ea2a9dfe2ef7a") ] }
 ]
 ```
+
 ### Example 1
 >下面的語法將會把 user 這個 collection 中身高大於 210 的使用者撈出，
 >加入一個新欄位 num，值是同一個 postal_code 中身高大於 200 的使用者數，
 >並且將其原本以 ObjectId 記錄的 postal_code 資料嵌入，
 >再將 friends 中的 postal_code 嵌入。
+
 ```
 @find <db=user coll=user query={ height : { $gte : 210 } }>
 [
@@ -32,7 +35,9 @@
   ]
 ]
 ```
+
 >執行 dsl 之後的結果
+
 ```
 [
   {
@@ -143,6 +148,7 @@
   }
 ]
 ```
+
 
 
 
