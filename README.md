@@ -6,7 +6,7 @@
 #### Example 1
 >執行 db.user.find({ height : { $gte : 215 } }) 的原始資料
 
-```
+```javascript
 [
   { 
     "_id" : ObjectId("557e58727a8ea2a9dfe2ef76"), 
@@ -57,7 +57,7 @@
 
 >執行 DSL 之後的結果
 
-```
+```javascript
 [
   {
     "_id":{"$oid":"557e58727a8ea2a9dfe2ef76"},
@@ -85,12 +85,77 @@
 ]
 ```
 
+## Repository
+> Maven
+
+```
+<repositories>
+  <repository>
+    <id>mongodb-dbobject-embedder</id>
+    <url>http://dl.bintray.com/hotdog929/maven</url>
+  </repository>
+</repositories>
+<dependencies>
+  <dependency>
+    <groupId>tw.com.ehanlin</groupId>
+    <artifactId>mongodb-dbobject-embedder</artifactId>
+    <version>0.0.1</version>
+  </dependency>
+</dependencies>
+```
+
+> Sbt
+
+```
+resolvers += "mongodb-dbobject-embedder" at "http://dl.bintray.com/hotdog929/maven"
+libraryDependencies ++= Seq(
+  "tw.com.ehanlin" % "mongodb-dbobject-embedder" % "0.0.1"
+)
+```
+
+> Gradle
+
+```
+repositories {
+    maven {
+        url "http://dl.bintray.com/hotdog929/maven"
+    }
+}
+dependencies {
+    compile 'tw.com.ehanlin:mongodb-dbobject-embedder:0.0.1'
+}
+```
+
+> Grape
+
+```
+@GrabResolver(name='mongodb-dbobject-embedder', root='http://dl.bintray.com/hotdog929/maven')
+@Grab('tw.com.ehanlin:mongodb-dbobject-embedder:0.0.1')
+```
+
+## 使用方式
+
+```java
+
+Mongo mongo = new Mongo(host, port)
+
+//設定 default db
+MongoEmbedder.registerDB(mongo.getDB("info"))
+
+//設定各 db
+MongoEmbedder.registerDB("info", mongo.getDB("info"))
+MongoEmbedder.registerDB("user", mongo.getDB("user"))
+
+//執行 DSL
+MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { $gte : 215 } }> [ ]")
+
+```
+
 
 ## 語法說明
 
 ### 屬性的迭代作用域
 >可以用在屬性上的作用城有二種
-
 * < content... > 會將傳入的值當一個單一值處理
 * [ content... ] 會將傳入的值當集合處理，依傳入值的類型，會有以下三種情況：
   * List ： for(v in List){List[index] = embed(v)} return List
@@ -101,7 +166,7 @@
 #### Example 2  < content... >
 >執行 db.user.findOne({ _id : ObjectId("557e58727a8ea2a9dfe2ef7a") }) 的原始資料
 
-```
+```javascript
 { 
   "_id" : ObjectId("557e58727a8ea2a9dfe2ef7a"), 
   "name" : "Rick", 
@@ -134,7 +199,7 @@
 
 >執行 DSL 之後的結果
 
-```
+```javascript
 {
   "_id":{"$oid":"557e58727a8ea2a9dfe2ef7a"},
   "name":"Rick",
