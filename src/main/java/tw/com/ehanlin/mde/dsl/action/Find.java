@@ -38,6 +38,7 @@ public class Find extends Count {
         while(cursor.hasNext()){
             result.add(cursor.next());
         }
+        cursor.close();
         return result;
     }
 

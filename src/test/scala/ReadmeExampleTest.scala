@@ -10,42 +10,15 @@ import tw.com.ehanlin.mde.MongoEmbedder
 
 import scala.collection.JavaConversions._
 
-class ReadmeExampleTest extends Specification with BeforeAfterAll {def is = s2"""
-  check Example 1               $example1
-"""
+abstract class ReadmeExampleTest extends Specification with BeforeAfterAll {
 
-  val port = 12346
+  val port = 12345
   var mongodExecutable : MongodExecutable = null
   var mongo : Mongo = null
 
   def mustString(obj : Object, str : String) = {
     obj.toString.replaceAll("\\s+", "") must_== str.replaceAll("\\s+", "")
   }
-
-  def example1 = {
-    println("<  Example  1  >")
-    val dsl =
-      """
-        |@find <db=user coll=user query={ height : { $gte : 210 } }>
-        |[
-        |  @count (db=user coll=user query={ height : { $gte : 200 } , postal_code : @.postal_code })
-        |  num
-        |
-        |  @findOneById <db=info coll=postal_code projection={ _id : 0 , name : 1 }>
-        |  postal_code
-        |
-        |  @findOneById [db=user coll=user, projection={ _id : 0 , postal_code : 1, height : 1}]
-        |  friends
-        |  [
-        |    @findOneById <db=info coll=postal_code projection={ _id : 0 , name : 1 }>
-        |    postal_code
-        |  ]
-        |]
-      """.stripMargin
-    val result = MongoEmbedder.instance.embed(null, dsl)
-    mustString(result, """[ { "_id" : { "$oid" : "557e58727a8ea2a9dfe2ef76"} , "name" : "Kirk" , "postal_code" : { "name" : "中正區"} , "height" : 220 , "friends" : [ { "postal_code" : { "name" : "中正區"} , "height" : 201} , { "postal_code" : { "name" : "中正區"} , "height" : 211} , { "postal_code" : { "name" : "信義區"} , "height" : 218} , { "postal_code" : { "name" : "內湖區"} , "height" : 208}] , "num" : 3} , { "_id" : { "$oid" : "557e58727a8ea2a9dfe2ef77"} , "name" : "Mick" , "postal_code" : { "name" : "中正區"} , "height" : 211 , "friends" : [ { "postal_code" : { "name" : "中正區"} , "height" : 220}] , "num" : 3} , { "_id" : { "$oid" : "557e58727a8ea2a9dfe2ef7a"} , "name" : "Rick" , "postal_code" : { "name" : "信義區"} , "height" : 218 , "friends" : [ { "postal_code" : { "name" : "中正區"} , "height" : 220} , { "postal_code" : { "name" : "信義區"} , "height" : 214} , { "postal_code" : { "name" : "內湖區"} , "height" : 208}] , "num" : 4} , { "_id" : { "$oid" : "557e58727a8ea2a9dfe2ef7c"} , "name" : "Toby" , "postal_code" : { "name" : "信義區"} , "height" : 214 , "friends" : [ { "postal_code" : { "name" : "信義區"} , "height" : 218}] , "num" : 4}]""")
-  }
-
 
   object MObj {
     def apply(elems: (String, Object)*) : BasicDBObject = {
