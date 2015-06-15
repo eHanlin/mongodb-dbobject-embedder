@@ -96,6 +96,7 @@
   * List ： for(v in List){List[index] = embed(v)} return List
   * Map ： for(k,v in Map){Map[k] = embed(v)} return Map
   * Other ： return [ embed(Other) ] as List
+* 巢狀迭代是合法的，比如 [[ content... ]] 對應到巢狀 List 時的執行方式是 for(v in List){List[index] = for(vv in v){embed(vv)}} return List
 
 #### Example 2  < content... >
 >執行 db.user.findOne({ _id : ObjectId("557e58727a8ea2a9dfe2ef7a") }) 的原始資料
@@ -153,156 +154,67 @@
 }
 ```
 
+#### Example 3  [ content... ] Map
+
+#### Example 4  [[ content... ]] List[ List... ]
 
 
+### Action 的迭代作用域
+>可以用在屬性上的作用城有三種
+* @Action ( info... ) 位在 info 中的 @ 會以屬性的父層代入
+* @Action < info... > 位在 info 中的 @ 會以屬性本身代入
+* @Action [ info... ] 若屬性本身是個集合，則位在 info 中的 @ 會以各子項帶入，不然會以屬性本身代入但回傳 List
+
+#### Example 5  ( info... )
+
+#### Example 6  < info... >
+
+#### Example 7  [ info... ]
 
 
-# !!尚未完成 (!! Not Ready)
+### 目前支援的 Action
+* @find
+  * db
+  * coll
+  * projection
+  * query
 
-# 目標規格
+* @findOne
+  * db
+  * coll
+  * projection
+  * query
 
-## DSL語法
-```
-//用傳入的 String List 中的 Task id 填充 Task
-@findOneById [db=user, coll=Task, projection={unit:true}]
-<
+* @findOneById
+  * db
+  * coll
+  * projection
 
-  @findOneById [db=info, coll=Unit, projection={createDate:0}]
-  unit <
+* @distinct
+  * db
+  * coll
+  * key
+  * query
 
-    @findOne <query={_id:@}>
-    subject
+* @count
+  * db
+  * coll
+  * query
 
-    @distinct (coll=Video key=subject query={subject:'PC',knowledge:{$in:@.knowledge}})
-    @findOneById [coll=subject]
-    videoSubject
-    
-    @findOneById [coll=Knowledge]
-    knowledge [
-        
-      @findOneById <>
-      subject
-      
-    ]
+* @aggregate
+  * db
+  * coll
+  * pipelines
 
-  >
-  
-  video <
-  
-    @findOne <query={_id:@}>
-    subject
-        
-  >
-  
-  knowledge [
-    
-    @findOne <query={_id:@}>
-    subject
-    
-    @findOne [query={_id:@}]
-    child [
-      
-      @findOne <query={_id:@}>
-      subject
-      
-    ]
-    
-  ]
+#### Example 8  all action
 
->
-```
-
-## 支援的操作
-### @find
-* db
-* coll
-* projection
-* query
-
-### @findOne
-* db
-* coll
-* projection
-* query
-
-### @findOneById
-* db
-* coll
-* projection
-
-### @distinct
-* db
-* coll
-* key
-* query
-
-### @count
-* db
-* coll
-* query
-
-### @aggregate
-* db
-* coll
-* pipelines
+### 預計實作的 Action
+* @dsl
+  * db
+  * coll
+  * dsl
 
 
-##作用域
+### 使用自訂 Action
 
-* ( )  父層為 @
-* < >  屬性值本身為 @
-* \[ \]  屬性值底下的每個 item 為 @
-
-若屬性值本身不是集合，則 \[ \] 和 { } 的 @ 指向同一個物件
-
-```
-{
-
-  subject : "PC"
-
-  video : [ "V_1" , "V_2" ]
-
-  user : [ { _id : "U_1" , name : "N_1" } , { _id : "U_2" , name : "N_2" } ]
-
-  link : { url : "URL" , display : "LINK" , next : { url : "NEXT_URL" , display : "NEXT" } }
-
-}
-```
-
-作用域同時會影響各 action 的處理方式，
-以上面的資料為基準
-
-```
-@findOne (query={"_id":"@"})
-video
-
-coll.findOne({"_id":{"subject":"PC","video":["V_1","V_2"],"user":[{"_id":"U_1","name":"N_1"},{"_id":"U_2","name":"N_2"}],"link":{"url":"URL","display":"LINK","next":{"url":"NEXT_URL","display":"NEXT"}}}})
-```
-
-```
-@findOne <query={"_id":"@"}>
-video
-
-coll.findOne({"_id":["V_1","V_2"]})
-```
-
-```
-@findOne [query={"_id":"@"}]
-video
-
-[
-  coll.findOne({"_id":"V_1"}),
-  coll.findOne({"_id":"V_2"})
-]
-```
-
-```
-@findOne [query={"_id":"@"}]
-link
-
-{
-  url : coll.findOne({"_id":"URL"}),
-  display : coll.findOne({"_id":"LINK"}),
-  next : coll.findOne({"_id":{"url":"NEXT_URL","display":"NEXT"}})
-}
-```
+#### Example 9  Custom Action
