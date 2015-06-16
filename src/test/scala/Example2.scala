@@ -1,7 +1,7 @@
 import tw.com.ehanlin.mde.MongoEmbedder
 
 class Example2 extends ReadmeExampleTest {def is = s2"""
-  Example1  $example2
+  Example2  $example2
 """
 
   def example2 = {

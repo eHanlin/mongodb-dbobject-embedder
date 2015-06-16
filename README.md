@@ -220,6 +220,50 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 ```
 
 #### Example 3  [ content... ] Map
+>執行 db.team.find({ _id : "zebra" }) 的原始資料
+
+```javascript
+{
+  "_id" : "zebra",
+  "name" : "zebra",
+  "player" : {
+    "c" : ObjectId("557e58727a8ea2a9dfe2ef76"),
+    "f" : ObjectId("557e58727a8ea2a9dfe2ef77"),
+    "g" : ObjectId("557e58727a8ea2a9dfe2ef7b")}
+}
+```
+
+>DSL
+
+```
+@findOne <db=user coll=team query={ _id : "zebra" } projection={ _id : 0 }>
+<
+  @findOneById [db=user coll=user projection={ _id : 0 , name : 1 , postal_code : 1 }]
+  player
+  [
+    @findOneById <db=info coll=postal_code projection={ _id : 0 , name : 1 }>
+    postal_code
+  ]
+>
+```
+
+>執行 DSL 之後的結果
+
+```
+{
+  "name":"zebra",
+  "player":{
+    "c":{
+      "name":"Kirk",
+      "postal_code":{"name":"中正區"}},
+    "f":{
+      "name":"Mick",
+      "postal_code":{"name":"中正區"}},
+    "g":{
+      "name":"Sean",
+      "postal_code":{"name":"信義區"}}}
+}
+```
 
 #### Example 4  [[ content... ]] List[ List... ]
 
