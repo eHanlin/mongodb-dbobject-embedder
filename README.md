@@ -266,6 +266,62 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 ```
 
 #### Example 4  [[ content... ]] List[ List... ]
+>執行 db.team.find({ _id : ObjectId("557e58727a8ea2a9dfe2ef83") }) 的原始資料
+
+```javascript
+{
+  "_id" : ObjectId("557e58727a8ea2a9dfe2ef83"),
+  "team" : ["zebra","snake"],
+  "box_score" : [
+    [
+      ObjectId("557e58727a8ea2a9dfe2ef86"),
+      ObjectId("557e58727a8ea2a9dfe2ef87"),
+      ObjectId("557e58727a8ea2a9dfe2ef88")
+    ],
+    [
+      ObjectId("557e58727a8ea2a9dfe2ef89"),
+      ObjectId("557e58727a8ea2a9dfe2ef8a"),
+      ObjectId("557e58727a8ea2a9dfe2ef8b")
+    ]
+  ]
+}
+```
+
+>DSL
+
+```
+@findOne <db=game coll=game query={ _id : { $oid : "557e58727a8ea2a9dfe2ef83" } } projection={ _id : 0 }>
+<
+  box_score
+  [
+    @findOneById [db=game coll=box_score projection={ _id : 0 , user : 1 , pts : 1 }]
+    [
+      @findOneById <db=user coll=user projection={ _id : 0 , name : 1 }>
+      user
+    ]
+  ]
+>
+```
+
+>執行 DSL 之後的結果
+
+```
+{
+  "team":["zebra","snake"],
+  "box_score":[
+    [
+      {"user":{"name":"Kirk"},"pts":11},
+      {"user":{"name":"Mick"},"pts":5},
+      {"user":{"name":"Sean"},"pts":5}
+    ],
+    [
+      {"user":{"name":"Toby"},"pts":3},
+      {"user":{"name":"Eric"},"pts":6},
+      {"user":{"name":"Glen"},"pts":6}
+    ]
+  ]
+}
+```
 
 
 ### Action 的迭代作用域
