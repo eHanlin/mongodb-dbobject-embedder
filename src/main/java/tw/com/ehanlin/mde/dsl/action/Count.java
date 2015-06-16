@@ -8,7 +8,7 @@ import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 import tw.com.ehanlin.mde.util.DataStack;
 import tw.com.ehanlin.mde.util.EmptyObject;
 
-public class Count extends Action {
+public class Count extends DbAction {
 
     public Count(Scope scope, MdeDBObject infos) {
         super(scope, infos);
@@ -26,8 +26,8 @@ public class Count extends Action {
     }
 
     @Override
-    protected String cacheKey(DataStack data, DBCollection coll) {
-        return "count_"+coll.getFullName()+"_"+AtEvaluator.eval(data, query()).toString();
+    protected String cacheKey(DataStack data, String prefix) {
+        return prefix+AtEvaluator.eval(data, query()).toString();
     }
 
     @Override

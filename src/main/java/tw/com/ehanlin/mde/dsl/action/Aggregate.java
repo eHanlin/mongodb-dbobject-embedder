@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Aggregate extends Action {
+public class Aggregate extends DbAction {
 
     public Aggregate(Scope scope, MdeDBObject infos) {
         super(scope, infos);
@@ -30,9 +30,9 @@ public class Aggregate extends Action {
     }
 
     @Override
-    protected String cacheKey(DataStack data, DBCollection coll) {
+    protected String cacheKey(DataStack data, String prefix) {
         BasicDBList pipes = (BasicDBList)AtEvaluator.eval(data, pipelines());
-        return "aggreate_"+coll.getFullName()+"_"+pipes.toString();
+        return prefix+pipes.toString();
     }
 
     @Override

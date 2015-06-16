@@ -19,8 +19,8 @@ public class FindOne extends Find {
     }
 
     @Override
-    protected String cacheKey(DataStack data, DBCollection coll) {
-        return "findOne_"+coll.getFullName()+"_"+ AtEvaluator.eval(data, query()).toString()+"_"+AtEvaluator.eval(data, projection()).toString();
+    protected String cacheKey(DataStack data, String prefix) {
+        return prefix+AtEvaluator.eval(data, query()).toString()+"_"+AtEvaluator.eval(data, projection()).toString();
     }
 
     @Override

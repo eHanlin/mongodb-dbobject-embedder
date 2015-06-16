@@ -23,8 +23,8 @@ public class Distinct extends Count {
     }
 
     @Override
-    protected String cacheKey(DataStack data, DBCollection coll) {
-        return "distinct_"+coll.getFullName()+"_"+key()+"_"+AtEvaluator.eval(data, query()).toString();
+    protected String cacheKey(DataStack data, String prefix) {
+        return prefix+key()+"_"+AtEvaluator.eval(data, query()).toString();
     }
 
     @Override
