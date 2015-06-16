@@ -331,6 +331,47 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 * @Action [ info... ] 若屬性本身是個集合，則位在 info 中的 @ 會以各子項帶入，不然會以屬性本身代入但回傳 List
 
 #### Example 5  ( info... )
+>執行 db.postal_code.find({},{name:1}) 的原始資料
+
+```
+[
+  { "_id" : ObjectId("557e56287a8ea2a9dfe2ef71"), "name" : "中正區" },
+  { "_id" : ObjectId("557e56287a8ea2a9dfe2ef72"), "name" : "信義區" },
+  { "_id" : ObjectId("557e56287a8ea2a9dfe2ef73"), "name" : "內湖區" }
+]
+```
+
+>DSL
+
+```
+@find <db=info coll=postal_code projection={ name : 1 }>
+[
+  @count (db=user coll=user query={ height : { $gte : 200 } , postal_code : @._id })
+  num
+]
+```
+
+>執行 DSL 之後的結果
+
+```
+[
+  {
+    "_id":{"$oid":"557e56287a8ea2a9dfe2ef71"},
+    "name":"中正區",
+    "num":3
+  },
+  {
+    "_id":{"$oid":"557e56287a8ea2a9dfe2ef72"},
+    "name":"信義區",
+    "num":4
+  },
+  {
+    "_id":{"$oid":"557e56287a8ea2a9dfe2ef73"},
+    "name":"內湖區",
+    "num":1
+  }
+]
+```
 
 #### Example 6  < info... >
 
