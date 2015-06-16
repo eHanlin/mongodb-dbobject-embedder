@@ -249,7 +249,7 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 
 >執行 DSL 之後的結果
 
-```
+```javascript
 {
   "name":"zebra",
   "player":{
@@ -305,7 +305,7 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 
 >執行 DSL 之後的結果
 
-```
+```javascript
 {
   "team":["zebra","snake"],
   "box_score":[
@@ -333,7 +333,7 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 #### Example 5  ( info... )
 >執行 db.postal_code.find({},{name:1}) 的原始資料
 
-```
+```javascript
 [
   { "_id" : ObjectId("557e56287a8ea2a9dfe2ef71"), "name" : "中正區" },
   { "_id" : ObjectId("557e56287a8ea2a9dfe2ef72"), "name" : "信義區" },
@@ -353,7 +353,7 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 
 >執行 DSL 之後的結果
 
-```
+```javascript
 [
   {
     "_id":{"$oid":"557e56287a8ea2a9dfe2ef71"},
@@ -376,7 +376,7 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 #### Example 6  < info... >
 >執行 db.postal_code.find({},{_id:0,code:0}) 的原始資料
 
-```
+```javascript
 [
   { "country" : "TW", "city" : "557e55af7a8ea2a9dfe2ef70", "name" : "中正區" },
   { "country" : "TW", "city" : "557e55af7a8ea2a9dfe2ef70", "name" : "信義區" },
@@ -399,7 +399,7 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 
 >執行 DSL 之後的結果
 
-```
+```javascript
 [
   {
     "country":{"name":"臺灣"},
@@ -420,6 +420,44 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 ```
 
 #### Example 7  [ info... ]
+>執行 db.user.findOne({_id:ObjectId("557e58727a8ea2a9dfe2ef74")},{_id:0,name:1,friends:1}) 的原始資料
+
+```javascript
+{
+  "name" : "Bill",
+  "friends" : [
+    ObjectId("557e58727a8ea2a9dfe2ef76"),
+    ObjectId("557e58727a8ea2a9dfe2ef78"),
+    ObjectId("557e58727a8ea2a9dfe2ef7e")]
+}
+```
+
+>DSL
+
+```
+@findOne [db=user coll=user query={ _id : { $oid : "557e58727a8ea2a9dfe2ef74" } } projection={ _id : 0 , name : 1 , friends : 1 }]
+<
+  0 
+  <
+    @findOneById [db=user coll=user projection={ _id : 0 , name : 1 }]
+    friends
+  >
+>
+```
+
+>執行 DSL 之後的結果
+
+```javascript
+[
+  {
+    "name":"Bill",
+    "friends":[
+      {"name":"Kirk"},
+      {"name":"Noah"},
+      {"name":"Andy"}]
+  }
+]
+```
 
 
 ### 目前支援的 Action
