@@ -11,6 +11,7 @@ import tw.com.ehanlin.mde.util.DuplicateConcurrentHashMap;
 
 public class MongoEmbedder {
 
+    public static final DslParser dslParser = new DslParser();
     public static final MongoEmbedder instance = new DuplicateMongoEmbedder();
     public static final MongoEmbedder noDuplicate = new MongoEmbedder();
 
@@ -31,12 +32,19 @@ public class MongoEmbedder {
 
     }
 
+    public Object embed(String dslStr) {
+        return embed(null, dslStr);
+    }
+
+    public Object embed(Dsl dsl) {
+        return embed(null, dsl);
+    }
+
     public Object embed(Object resource, String dslStr) {
-        return embed(resource, DslParser.instance.parse(dslStr));
+        return embed(resource, dslParser.parse(dslStr));
     }
 
     public Object embed(Object resource, Dsl dsl) {
-        System.out.println("\r\n< embed >\r\n[ resource ]\r\n"+resource+"\r\n[ dsl ]\r\n"+dsl);
         return dsl.execute(new DataStack(null, resource), dbMap, new ConcurrentHashMap(), false);
     }
 

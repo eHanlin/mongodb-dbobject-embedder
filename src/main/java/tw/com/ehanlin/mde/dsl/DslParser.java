@@ -17,8 +17,6 @@ import java.util.regex.Pattern;
 
 public class DslParser {
 
-    public static DslParser instance = new DslParser();
-
     private ConcurrentHashMap<String, Class<? extends Action>> actionMap = new ConcurrentHashMap();
 
     public DslParser() {

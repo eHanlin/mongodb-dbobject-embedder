@@ -6,7 +6,7 @@ class DslTest extends Specification {def is = s2"""
 """
 
   def checkBasic = {
-    val dsl = DslParser.instance.parse(
+    val dsl = new DslParser().parse(
       """@findOneById [db=user coll=Task projection={unit:true}]
         |<
         |
