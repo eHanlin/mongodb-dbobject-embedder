@@ -374,6 +374,50 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 ```
 
 #### Example 6  < info... >
+>執行 db.postal_code.find({},{_id:0,code:0}) 的原始資料
+
+```
+[
+  { "country" : "TW", "city" : "557e55af7a8ea2a9dfe2ef70", "name" : "中正區" },
+  { "country" : "TW", "city" : "557e55af7a8ea2a9dfe2ef70", "name" : "信義區" },
+  { "country" : "TW", "city" : "557e55af7a8ea2a9dfe2ef70", "name" : "內湖區" }
+]
+```
+
+>DSL
+
+```
+@find <db=info coll=postal_code projection={ _id : 0 , code : 0 }>
+[
+  @findOne (db=info coll=country query={ _id : @.country } projection={ _id : 0 })
+  country
+
+  @findOne (db=info coll=city query={ _id : { $oid : @.city } } projection={ _id : 0 , country : 0 })
+  city
+]
+```
+
+>執行 DSL 之後的結果
+
+```
+[
+  {
+    "country":{"name":"臺灣"},
+    "city":{"name":"臺北市"},
+    "name":"中正區"
+  },
+  {
+    "country":{"name":"臺灣"},
+    "city":{"name":"臺北市"},
+    "name":"信義區"
+  },
+  {
+    "country":{"name":"臺灣"},
+    "city":{"name":"臺北市"},
+    "name":"內湖區"
+  }
+]
+```
 
 #### Example 7  [ info... ]
 
