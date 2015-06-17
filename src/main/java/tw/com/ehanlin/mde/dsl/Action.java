@@ -38,13 +38,13 @@ public abstract class Action {
                 break;
             case PARENT :
                 if(data.hasParent()){
-                    data.setSelf(executeObjectWithCache(data.getParent(), dbMap, cache));
+                    data.setSelf(executeObjectWithCache(data.getParent(), dbMap, cache, parallel));
                 }else{
-                    data.setSelf(executeObjectWithCache(data, dbMap, cache));
+                    data.setSelf(executeObjectWithCache(data, dbMap, cache, parallel));
                 }
                 break;
             case SELF:
-                data.setSelf(executeObjectWithCache(data, dbMap, cache));
+                data.setSelf(executeObjectWithCache(data, dbMap, cache, parallel));
                 break;
         }
     }
@@ -53,7 +53,7 @@ public abstract class Action {
 
     protected abstract String cacheKey(DataStack data);
 
-    protected abstract Object executeObject(DataStack data, Map<String, DB> dbMap);
+    protected abstract Object executeObject(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel);
 
     protected String toString(String name, Object... args) {
         StringBuilder result = new StringBuilder("@");
@@ -84,7 +84,7 @@ public abstract class Action {
         List list = (List) data.getSelf();
         ConcurrentCache<Integer, Object> tmp = new ConcurrentCache();
         StreamSupport.stream(IntStream.range(0, list.size()).spliterator(), parallel).forEach(index -> {
-            tmp.put(index, executeObjectWithCache(new DataStack(data, list.get(index)), dbMap, cache));
+            tmp.put(index, executeObjectWithCache(new DataStack(data, list.get(index)), dbMap, cache, parallel));
         });
         tmp.forEach((k, v) -> list.set(k, v));
     }
@@ -95,7 +95,7 @@ public abstract class Action {
             Map map = (Map) source;
             ConcurrentCache<Object, Object> tmp = new ConcurrentCache();
             StreamSupport.stream(map.keySet().spliterator(), parallel).forEach(key -> {
-                tmp.put(key, executeObjectWithCache(new DataStack(data, map.get(key)), dbMap, cache));
+                tmp.put(key, executeObjectWithCache(new DataStack(data, map.get(key)), dbMap, cache, parallel));
             });
             tmp.forEach((k, v) -> map.put(k, v));
         }else if(source instanceof List){
@@ -114,10 +114,10 @@ public abstract class Action {
         return source;
     }
 
-    private Object executeObjectWithCache(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache) {
+    private Object executeObjectWithCache(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
         String key = cacheKey(data);
         if(!cache.containsKey(key)){
-            Object result = executeObject(data, dbMap);
+            Object result = executeObject(data, dbMap, cache, parallel);
             cache.put(key, (result != null) ? result : EmptyObject.Null);
         }
         Object result = cache.get(key);

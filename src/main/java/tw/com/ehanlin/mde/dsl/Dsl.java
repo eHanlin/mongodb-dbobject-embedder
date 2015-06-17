@@ -18,25 +18,27 @@ public class Dsl {
         LIST
     }
 
-    public Dsl() {
-
+    public Dsl(DslParser parser) {
+        _parser = parser;
     }
 
-    public Dsl(Iterate iterate) {
+    public Dsl(DslParser parser, Iterate iterate) {
+        this(parser);
         _iterate = iterate;
     }
 
-    public Dsl(Collection<Action> actions) {
+    public Dsl(DslParser parser, Collection<Action> actions) {
+        this(parser);
         appendAction(actions);
     }
 
-    public Dsl(Iterate iterate, Collection<Action> actions) {
+    public Dsl(DslParser parser, Iterate iterate, Collection<Action> actions) {
+        this(parser);
         _iterate = iterate;
         appendAction(actions);
     }
 
     public Object execute(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
-
         for(Action action : _actions) {
             action.execute(data, dbMap, cache, parallel);
         }
@@ -106,6 +108,10 @@ public class Dsl {
         return _name;
     }
 
+    public DslParser parser() {
+        return _parser;
+    }
+
     @Override
     public String toString() {
         return toString("", "");
@@ -127,6 +133,7 @@ public class Dsl {
     private Iterate _iterate = Iterate.MAP;
     private Dsl _parent;
     private String _name;
+    private DslParser _parser;
 
 
     private void excuteMapData(DataStack data, Boolean parallel, BiFunction<Object, DataStack, Object> action) {

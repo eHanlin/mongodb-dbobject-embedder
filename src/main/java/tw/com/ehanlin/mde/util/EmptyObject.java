@@ -10,7 +10,7 @@ public class EmptyObject {
     public static BasicDBList BasicDBList = new BasicDBList();
     public static MdeDBObject MdeDBObject = new MdeDBObject();
     public static MdeDBList MdeDBList = new MdeDBList();
-    public static Dsl Dsl = new Dsl();
+    public static Dsl Dsl = new Dsl(null);
     public static Null Null = tw.com.ehanlin.mde.dsl.mongo.Null.instance;
 
     private EmptyObject() {

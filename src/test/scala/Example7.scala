@@ -17,7 +17,6 @@ class Example7 extends ReadmeExampleTest {def is = s2"""
         |>
       """.stripMargin
     val result = MongoEmbedder.instance.embed(null, dsl)
-    println(result)
     mustString(result,
       """
         |[

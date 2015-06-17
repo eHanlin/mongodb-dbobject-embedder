@@ -16,10 +16,12 @@ public abstract class DbAction extends Action {
         _coll = (String)infos.get("coll");
     }
 
-    protected Object executeObject(DataStack data, Map<String, DB> dbMap) {
+    @Override
+    protected Object executeObject(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
         return executeObject(data, dbMap.get(db()).getCollection(coll()));
     }
 
+    @Override
     protected String cacheKey(DataStack data) {
         return cacheKey(data, this.getClass().getName()+"_"+db()+"_"+coll()+"_");
     }

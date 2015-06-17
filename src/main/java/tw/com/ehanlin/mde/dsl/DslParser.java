@@ -56,12 +56,18 @@ public class DslParser {
                     break;
                 case "<" :
                 case "[" :
-                    Dsl result = (matcher.match().equals("<")) ? new Dsl(Dsl.Iterate.MAP, actions) : new Dsl(Dsl.Iterate.LIST, actions);
+                    Dsl result = (matcher.match().equals("<")) ? new Dsl(this, Dsl.Iterate.MAP, actions) : new Dsl(this, Dsl.Iterate.LIST, actions);
                     parseContent(result, reader);
                     cache.put(dsl, result);
                     return result;
             }
         }while(!((matcher = reader.splice(rootSymbols)).finish()));
+
+        if(!actions.isEmpty()){
+            Dsl result = new Dsl(this, actions);
+            cache.put(dsl, result);
+            return result;
+        }
 
         cache.put(dsl, EmptyObject.Dsl);
         return EmptyObject.Dsl;
@@ -88,7 +94,7 @@ public class DslParser {
         loop: while(!((matcher = reader.splice(readActionOrPropertySymbols)).finish())){
             Dsl lastDsl = null;
             for(String parseProperty : parseProperties(matcher.prefix().trim())){
-                lastDsl = new Dsl(actions);
+                lastDsl = new Dsl(this, actions);
                 current.appendDsl(parseProperty, lastDsl);
                 actions = new ArrayList();
             }
@@ -99,7 +105,7 @@ public class DslParser {
                 case "<" :
                 case "[" :
                     if(lastDsl == null){
-                        lastDsl = new Dsl(((matcher.match().equals("<")) ? Dsl.Iterate.MAP : Dsl.Iterate.LIST), actions);
+                        lastDsl = new Dsl(this, ((matcher.match().equals("<")) ? Dsl.Iterate.MAP : Dsl.Iterate.LIST), actions);
                         actions = new ArrayList();
                         current.nestedDsl(lastDsl);
                     }else{

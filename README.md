@@ -494,15 +494,120 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
   * coll
   * pipelines
 
-#### Example 8  all action
-
-### 預計實作的 Action
-* @dsl
-  * db
-  * coll
-  * dsl
-
 
 ### 使用自訂 Action
+>主要有二種方法可以選擇
+* extends DslAction 將一群 Action 的集合打包成一個 Action
+* extends DbAction 對單一個 DBColleciton 做自定的操作
+
+#### Example 8  DslAction
+>新增一個 EmbedPostalCode 類別
+
+```java
+package my.action;
+
+import tw.com.ehanlin.mde.dsl.Dsl;
+import tw.com.ehanlin.mde.dsl.action.DslAction;
+import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
+
+public class EmbedPostalCode extends DslAction {
+
+    private static Dsl _actionDsl;
+
+    public EmbedPostalCode(Scope scope, MdeDBObject infos) {
+        super(scope, infos);
+    }
+
+    @Override
+    protected Dsl actionDsl() {
+        if(_actionDsl == null) {
+            _actionDsl = this.dsl().parser().parse("" +
+                    "@findOne <db=user coll=user query={ _id : { $oid : @ } }>\n" +
+                    "<\n" +
+                    "  @findOneById <db=info coll=postal_code projection={ _id : 0 }>\n" +
+                    "  postal_code\n" +
+                    "  <\n" +
+                    "    @findOne <db=info coll=city query={ _id : { $oid : @ } } projection={ _id : 0 }>\n" +
+                    "    city\n" +
+                    "    <\n" +
+                    "      @findOneById <db=info coll=country projection={ _id : 0 }>\n" +
+                    "      country\n" +
+                    "    >\n" +
+                    "  >\n" +
+                    ">");
+        }
+        return _actionDsl;
+    }
+}
+```
+
+>註冊 EmbedPostalCode
+
+```java
+MongoEmbedder.dslParser.registerAction("embedPostalCode", my.action.EmbedPostalCode.class);
+```
+
+>DSL
+
+```
+@embedPostalCode []
+[
+  @findOneById [db=user coll=user projection={ _id : 0 , name : 1 }]
+  friends
+]
+```
+
+>執行 DSL
+
+```java
+  BasicDBList list = new BasicDBList();
+  list.add("557e58727a8ea2a9dfe2ef76");
+  list.add("557e58727a8ea2a9dfe2ef7a");
+  MongoEmbedder.instance.embed(list, dsl);
+```
+
+>執行 DSL 之後的結果
+
+```
+[
+  {
+    "_id":{"$oid":"557e58727a8ea2a9dfe2ef76"},
+    "name":"Kirk",
+    "postal_code":{
+      "country":"TW",
+      "city":{"country":{"name":"臺灣"},"name":"臺北市"},
+      "code":"100",
+      "name":"中正區"},
+    "height":220,
+    "friends":[
+      {"name":"Bill"},
+      {"name":"Mick"},
+      {"name":"Rick"},
+      {"name":"Andy"}]
+  },
+  {
+    "_id":{"$oid":"557e58727a8ea2a9dfe2ef7a"},
+    "name":"Rick",
+    "postal_code":{
+      "country":"TW",
+      "city":{"country":{"name":"臺灣"},"name":"臺北市"},
+      "code":"110",
+      "name":"信義區"},
+    "height":218,
+    "friends":[
+      {"name":"Kirk"},
+      {"name":"Toby"},
+      {"name":"Andy"}]
+  }
+]
+```
+
 
 #### Example 9  Custom Action
+
+
+
+
+
+
+
