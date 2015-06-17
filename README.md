@@ -538,6 +538,11 @@ public class EmbedPostalCode extends DslAction {
         }
         return _actionDsl;
     }
+
+    @Override
+    public String toString() {
+        return toString("embedPostalCode");
+    }
 }
 ```
 
@@ -568,7 +573,7 @@ MongoEmbedder.dslParser.registerAction("embedPostalCode", my.action.EmbedPostalC
 
 >執行 DSL 之後的結果
 
-```
+```javascript
 [
   {
     "_id":{"$oid":"557e58727a8ea2a9dfe2ef76"},
@@ -604,10 +609,136 @@ MongoEmbedder.dslParser.registerAction("embedPostalCode", my.action.EmbedPostalC
 
 
 #### Example 9  Custom Action
+>新增一個 FindLimit2 類別
 
+```java
+package my.action;
 
+import com.mongodb.BasicDBList;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import tw.com.ehanlin.mde.dsl.action.DbAction;
+import tw.com.ehanlin.mde.dsl.mongo.AtEvaluator;
+import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
+import tw.com.ehanlin.mde.util.DataStack;
+import tw.com.ehanlin.mde.util.EmptyObject;
 
+public class FindLimit2 extends DbAction {
 
+    public FindLimit2(Scope scope, MdeDBObject infos) {
+        super(scope, infos);
+
+        MdeDBObject query = (MdeDBObject)infos.get("query");
+        _query = (query != null) ? query : EmptyObject.MdeDBObject;
+
+    }
+
+    public MdeDBObject query() {
+        return (_query.isEmpty()) ? _query : (MdeDBObject)_query.copy();
+    }
+
+    @Override
+    public String toString() {
+        return toString("findLimit2", "db", db(), "coll", coll(), "query", query());
+    }
+
+    @Override
+    protected String cacheKey(DataStack data, String prefix) {
+        return prefix+ AtEvaluator.eval(data, query()).toString();
+    }
+
+    @Override
+    protected Object executeObject(DataStack data, DBCollection coll) {
+        BasicDBList result = new BasicDBList();
+        DBCursor cursor = coll.find(AtEvaluator.eval(data, query())).limit(2);
+        while(cursor.hasNext()){
+            result.add(cursor.next());
+        }
+        cursor.close();
+        return result;
+    }
+
+    private MdeDBObject _query;
+}
+```
+
+>註冊 EmbedPostalCode
+
+```java
+MongoEmbedder.dslParser.registerAction("findLimit2", my.action.FindLimit2.class);
+```
+
+>執行 db.user.find({height:{$gte:210}}) 的原始資料共 3 筆
+
+```javascript
+[
+  {
+    "_id" : ObjectId("557e58727a8ea2a9dfe2ef76"),
+    "name" : "Kirk",
+    "postal_code" : ObjectId("557e56287a8ea2a9dfe2ef71"),
+    "height" : 220,
+    "friends" : [
+      ObjectId("557e58727a8ea2a9dfe2ef74"),
+      ObjectId("557e58727a8ea2a9dfe2ef77"),
+      ObjectId("557e58727a8ea2a9dfe2ef7a"),
+      ObjectId("557e58727a8ea2a9dfe2ef7e")]
+  },
+  {
+    "_id" : ObjectId("557e58727a8ea2a9dfe2ef7a"),
+    "name" : "Rick",
+    "postal_code" : ObjectId("557e56287a8ea2a9dfe2ef72"),
+    "height" : 218,
+    "friends" : [
+      ObjectId("557e58727a8ea2a9dfe2ef76"),
+      ObjectId("557e58727a8ea2a9dfe2ef7c"),
+      ObjectId("557e58727a8ea2a9dfe2ef7e")]
+  },
+  {
+    "_id" : ObjectId("557e58727a8ea2a9dfe2ef7c"),
+    "name" : "Toby",
+    "postal_code" : ObjectId("557e56287a8ea2a9dfe2ef72"),
+    "height" : 214,
+    "friends" : [
+      ObjectId("557e58727a8ea2a9dfe2ef7a")]
+  }
+]
+```
+
+>DSL
+
+```
+@findLimit2 <db=user coll=user query={ height : { $gte : 210 } }>
+[
+  @findOneById [db=info coll=postal_code projection={ _id : 0 , name : 1 }]
+  postal_code
+]
+```
+
+>執行 DSL 之後的結果，會被 limit 限制到 2 筆資料
+
+```javascript
+[
+  {
+    "_id":{"$oid":"557e58727a8ea2a9dfe2ef76"},
+    "name":"Kirk",
+    "postal_code":[{"name":"中正區"}],
+    "height":220,
+    "friends":[
+      {"$oid":"557e58727a8ea2a9dfe2ef74"},
+      {"$oid":"557e58727a8ea2a9dfe2ef77"},
+      {"$oid":"557e58727a8ea2a9dfe2ef7a"},
+      {"$oid":"557e58727a8ea2a9dfe2ef7e"}]
+  },
+  {
+    "_id":{"$oid":"557e58727a8ea2a9dfe2ef77"},
+    "name":"Mick",
+    "postal_code":[{"name":"中正區"}],
+    "height":211,
+    "friends":[
+      {"$oid":"557e58727a8ea2a9dfe2ef76"}]
+  }
+]
+```
 
 
 

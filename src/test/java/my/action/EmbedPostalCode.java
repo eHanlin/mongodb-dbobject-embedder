@@ -32,4 +32,9 @@ public class EmbedPostalCode extends DslAction {
         }
         return _actionDsl;
     }
+
+    @Override
+    public String toString() {
+        return toString("embedPostalCode");
+    }
 }
