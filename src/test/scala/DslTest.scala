@@ -42,7 +42,7 @@ class DslTest extends Specification {def is = s2"""
         |    @findOne <query={_id:@}>
         |    subject
         |
-        |    @find [query={_id:@}]
+        |    @find [query={_id:@} skip=5 limit=10]
         |    child [[
         |
         |      @findOne <query={_id:@}>
@@ -76,7 +76,7 @@ class DslTest extends Specification {def is = s2"""
                |  knowledge [
                |    @findOne < query={ "_id" : @} projection={ } >
                |    subject
-               |    @find [ query={ "_id" : @} projection={ } ]
+               |    @find [ query={ "_id" : @} projection={ } skip=5 limit=10 ]
                |    child [
                |      [
                |        @findOne < query={ "_id" : @} projection={ } >

@@ -6,11 +6,19 @@ import com.mongodb.DBCursor;
 import tw.com.ehanlin.mde.dsl.mongo.AtEvaluator;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 import tw.com.ehanlin.mde.util.DataStack;
+import tw.com.ehanlin.mde.util.EmptyObject;
 
-public class FindOne extends Find {
+public class FindOne extends Count {
 
     public FindOne(Scope scope, MdeDBObject infos) {
         super(scope, infos);
+
+        MdeDBObject projection = (MdeDBObject)infos.get("projection");
+        _projection = (projection != null) ? projection : EmptyObject.MdeDBObject;
+    }
+
+    public MdeDBObject projection() {
+        return (_projection.isEmpty()) ? _projection : (MdeDBObject)_projection.copy();
     }
 
     @Override
@@ -28,4 +36,5 @@ public class FindOne extends Find {
         return coll.findOne(AtEvaluator.eval(data, query()), AtEvaluator.eval(data, projection()));
     }
 
+    private MdeDBObject _projection;
 }
