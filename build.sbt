@@ -43,7 +43,7 @@ autoScalaLibrary := false
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
 libraryDependencies ++= Seq(
-  "org.mongodb" % "mongo-java-driver" % "3.0.2",
+  "org.mongodb" % "mongo-java-driver" % "2.12.0" % Provided,
   "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.48.0" % Test,
   "org.specs2" %% "specs2-core" % "3.6.1" % Test
 )
