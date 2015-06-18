@@ -99,7 +99,7 @@
   <dependency>
     <groupId>tw.com.ehanlin</groupId>
     <artifactId>mongodb-dbobject-embedder</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
   </dependency>
 </dependencies>
 ```
@@ -109,7 +109,7 @@
 ```
 resolvers += "mongodb-dbobject-embedder" at "http://dl.bintray.com/hotdog929/maven"
 libraryDependencies ++= Seq(
-  "tw.com.ehanlin" % "mongodb-dbobject-embedder" % "0.0.3"
+  "tw.com.ehanlin" % "mongodb-dbobject-embedder" % "0.0.4"
 )
 ```
 
@@ -122,7 +122,7 @@ repositories {
     }
 }
 dependencies {
-    compile 'tw.com.ehanlin:mongodb-dbobject-embedder:0.0.3'
+    compile 'tw.com.ehanlin:mongodb-dbobject-embedder:0.0.4'
 }
 ```
 
@@ -130,7 +130,7 @@ dependencies {
 
 ```
 @GrabResolver(name='mongodb-dbobject-embedder', root='http://dl.bintray.com/hotdog929/maven')
-@Grab('tw.com.ehanlin:mongodb-dbobject-embedder:0.0.3')
+@Grab('tw.com.ehanlin:mongodb-dbobject-embedder:0.0.4')
 ```
 
 ## 使用方式
@@ -464,34 +464,43 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 * @find
   * db
   * coll
+  * index
   * projection
   * query
+  * sort
+  * skip
+  * limit
 
 * @findOne
   * db
   * coll
+  * index
   * projection
   * query
 
 * @findOneById
   * db
   * coll
+  * index
   * projection
 
 * @distinct
   * db
   * coll
+  * index
   * key
   * query
 
 * @count
   * db
   * coll
+  * index
   * query
 
 * @aggregate
   * db
   * coll
+  * index
   * pipelines
 
 
