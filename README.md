@@ -99,7 +99,7 @@
   <dependency>
     <groupId>tw.com.ehanlin</groupId>
     <artifactId>mongodb-dbobject-embedder</artifactId>
-    <version>0.0.5</version>
+    <version>0.0.6</version>
   </dependency>
 </dependencies>
 ```
@@ -109,7 +109,7 @@
 ```
 resolvers += "mongodb-dbobject-embedder" at "http://dl.bintray.com/hotdog929/maven"
 libraryDependencies ++= Seq(
-  "tw.com.ehanlin" % "mongodb-dbobject-embedder" % "0.0.5"
+  "tw.com.ehanlin" % "mongodb-dbobject-embedder" % "0.0.6"
 )
 ```
 
@@ -122,7 +122,7 @@ repositories {
     }
 }
 dependencies {
-    compile 'tw.com.ehanlin:mongodb-dbobject-embedder:0.0.5'
+    compile 'tw.com.ehanlin:mongodb-dbobject-embedder:0.0.6'
 }
 ```
 
@@ -130,7 +130,7 @@ dependencies {
 
 ```
 @GrabResolver(name='mongodb-dbobject-embedder', root='http://dl.bintray.com/hotdog929/maven')
-@Grab('tw.com.ehanlin:mongodb-dbobject-embedder:0.0.5')
+@Grab('tw.com.ehanlin:mongodb-dbobject-embedder:0.0.6')
 ```
 
 ## 使用方式
@@ -329,6 +329,11 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 * @Action ( info... ) 位在 info 中的 @ 會以屬性的父層代入
 * @Action < info... > 位在 info 中的 @ 會以屬性本身代入
 * @Action [ info... ] 若屬性本身是個集合，則位在 info 中的 @ 會以各子項帶入，不然會以屬性本身代入但回傳 List
+
+>位在 info 中的 @ 可以使用以下方法參照上層資料
+* @../.property 代入父層資料的 property 屬性
+* @../../.property 代入父層資料的 父層資料的 property 屬性
+* @.../.property 代入最上層資料的 property 屬性
 
 #### Example 5  ( info... )
 >執行 db.postal_code.find({},{name:1}) 的原始資料
