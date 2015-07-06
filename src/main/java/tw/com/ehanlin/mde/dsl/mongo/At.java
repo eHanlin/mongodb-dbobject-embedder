@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
 
 public class At {
 
+    private static final String _root = "(<[{root}]>)";
+    private static final String _rootRegex = "\\.\\./";
     private static final String _parent = "(<[{parent}]>)";
     private static final String _parentRegex = "\\./";
     private static final String _childRegex = "\\.";
@@ -17,7 +19,7 @@ public class At {
 
     public At(String at) {
         _at = at;
-        _keys = at.replaceAll(_parentRegex, _parent).split(_childRegex);
+        _keys = at.replaceAll(_rootRegex, _root).replaceAll(_parentRegex, _parent).split(_childRegex);
     }
 
     @Override
@@ -33,7 +35,9 @@ public class At {
         for(int i=1 ; i<_keys.length ; i++) {
             Object self = currentData.getSelf();
             String key = _keys[i];
-            if(key.equals(_parent)){
+            if(key.equals(_root)){
+                currentData = findRoot(currentData);
+            }else if(key.equals(_parent)){
                 currentData = currentData.getParent();
             }else{
                 if(self instanceof Map) {
@@ -45,5 +49,13 @@ public class At {
         }
 
         return currentData.getSelf();
+    }
+
+    private DataStack findRoot(DataStack data) {
+        DataStack current = data;
+        while(current.hasParent()){
+            current = current.getParent();
+        }
+        return current;
     }
 }
