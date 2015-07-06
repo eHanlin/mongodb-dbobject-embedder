@@ -1,3 +1,4 @@
+import com.mongodb.BasicDBObject
 import tw.com.ehanlin.mde.MongoEmbedder
 
 class FindTest extends ReadmeExampleTest {def is = s2"""
@@ -7,11 +8,11 @@ class FindTest extends ReadmeExampleTest {def is = s2"""
   def test = {
     val dsl =
       """
-        |@find <db=user coll=user projection={ name : 1 , height : 1} sort={ height : -1 } skip=2 limit=2>
+        |@find <db=user coll=user projection={ name : 1 , height : 1} sort={ height : -1 } skip=2 limit=@.limit>
         |[
         |]
       """.stripMargin
-    val result = MongoEmbedder.instance.embed(null, dsl)
+    val result = MongoEmbedder.instance.embed(new BasicDBObject("limit",2), dsl)
     mustString(result,
       """
         |[
