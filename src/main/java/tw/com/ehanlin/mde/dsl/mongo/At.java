@@ -12,7 +12,7 @@ public class At {
     private static final String _rootReplace = "."+_root;
     private static final String _rootRegex = "\\.\\.\\./";
     private static final String _parent = "(<[{parent}]>)";
-    private static final String _parentReplace = "."+_root;
+    private static final String _parentReplace = "."+_parent;
     private static final String _parentRegex = "\\.\\./";
     private static final String _childRegex = "\\.";
 
