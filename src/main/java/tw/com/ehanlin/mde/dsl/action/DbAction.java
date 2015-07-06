@@ -14,27 +14,34 @@ public abstract class DbAction extends Action {
 
     private static final ConcurrentHashMap<String, Boolean> _indexMap = new ConcurrentHashMap();
 
+    public static final String KEY_DB = "db";
+    public static final String KEY_COLL = "coll";
+    public static final String KEY_INDEX = "index";
+
     public DbAction (Scope scope, MdeDBObject infos) {
         super(scope, infos);
-        _db = (String)infos.get("db");
-        _coll = (String)infos.get("coll");
-        _index = infos.get("index");
     }
 
-    private void checkIndex(DBCollection dbColl, BasicDBObject index, List<String> indexStrs) {
-        if(!indexStrs.contains(index.toString())){
-            dbColl.createIndex(index);
-        }
+    public String db(DataStack data) {
+        return (String) evalInfo(KEY_DB, data);
     }
 
-    private void checkIndex(DBCollection dbColl, BasicDBList indexs, List<String> indexStrs) {
-        indexs.forEach(index -> checkIndex(dbColl, (BasicDBObject)index, indexStrs));
+    public String coll(DataStack data) {
+        return (String) evalInfo(KEY_COLL, data);
+    }
+
+    public Object index(DataStack data) {
+        return evalInfo(KEY_INDEX, data);
     }
 
     @Override
     protected Object executeObject(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
+        String _db = db(data);
+        String _coll = coll(data);
+        Object _index = index(data);
+
         if(_index != null){
-            DBCollection dbColl = dbMap.get(db()).getCollection(coll());
+            DBCollection dbColl = dbMap.get(_db).getCollection(_coll);
             String indexMapKey = dbColl.getFullName()+"_"+this.getClass().getName();
             if(!_indexMap.containsKey(indexMapKey)){
                 List<DBObject> indexInfo = dbColl.getIndexInfo();
@@ -50,28 +57,25 @@ public abstract class DbAction extends Action {
             }
         }
 
-        return executeObject(data, dbMap.get(db()).getCollection(coll()));
+        return executeObject(data, dbMap.get(_db).getCollection(_coll));
     }
 
     @Override
     protected String cacheKey(DataStack data) {
-        return cacheKey(data, this.getClass().getName()+"_"+db()+"_"+coll()+"_");
+        return cacheKey(data, this.getClass().getName() + "_" + db(data) + "_" + coll(data) + "_");
     }
 
     protected abstract String cacheKey(DataStack data, String prefix);
 
     protected abstract Object executeObject(DataStack data, DBCollection coll);
 
-    public String db() {
-        return _db;
+    private void checkIndex(DBCollection dbColl, BasicDBObject index, List<String> indexStrs) {
+        if(!indexStrs.contains(index.toString())){
+            dbColl.createIndex(index);
+        }
     }
 
-    public String coll() {
-        return _coll;
+    private void checkIndex(DBCollection dbColl, BasicDBList indexs, List<String> indexStrs) {
+        indexs.forEach(index -> checkIndex(dbColl, (BasicDBObject)index, indexStrs));
     }
-
-    private String _db;
-    private String _coll;
-    private Object _index;
-
 }

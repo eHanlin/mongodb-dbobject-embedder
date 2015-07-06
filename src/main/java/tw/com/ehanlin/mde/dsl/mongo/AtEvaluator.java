@@ -8,18 +8,22 @@ import tw.com.ehanlin.mde.util.DataStack;
 
 public class AtEvaluator {
 
-    public static DBObject eval(DataStack data, DBObject structure) {
+    public static Object eval(DataStack data, Object structure) {
+
+        if(structure instanceof At) {
+            return ((At) structure).eval(data);
+        }
 
         if(structure instanceof BasicDBObject) {
             BasicDBObject clone = (BasicDBObject)((BasicDBObject) structure).copy();
             replace(data, clone);
-            return (DBObject) JSON.parse(clone.toString());
+            return JSON.parse(clone.toString());
         }
 
         if(structure instanceof BasicDBList) {
             BasicDBList clone = (BasicDBList)((BasicDBList) structure).copy();
             replace(data, clone);
-            return (DBObject) JSON.parse(clone.toString());
+            return JSON.parse(clone.toString());
         }
 
         return structure;

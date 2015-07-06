@@ -58,28 +58,28 @@ class DslTest extends Specification {def is = s2"""
                |<
                |  @findOneById [ db=info coll=Unit projection={ "createDate" : 0} ]
                |  unit <
-               |    @findOne < query={ "_id" : @} projection={ } >
+               |    @findOne < query={ "_id" : @} >
                |    subject
                |    @distinct ( coll=Video key=subject query={ "subject" : "PC" , "knowledge" : { "$in" : @.knowledge}} )
-               |    @findOneById [ coll=subject projection={ } ]
+               |    @findOneById [ coll=subject ]
                |    videoSubject
-               |    @findOneById [ coll=Knowledge projection={ } ]
+               |    @findOneById [ coll=Knowledge ]
                |    knowledge [
-               |      @findOneById < projection={ } >
+               |      @findOneById <  >
                |      subject
                |    ]
                |  >
                |  video <
-               |    @findOne < query={ "_id" : @} projection={ } >
+               |    @findOne < query={ "_id" : @} >
                |    subject
                |  >
                |  knowledge [
-               |    @findOne < query={ "_id" : @} projection={ } >
+               |    @findOne < query={ "_id" : @} >
                |    subject
-               |    @find [ query={ "_id" : @} projection={ } skip=5 limit=10 ]
+               |    @find [ query={ "_id" : @} skip=5 limit=10 ]
                |    child [
                |      [
-               |        @findOne < query={ "_id" : @} projection={ } >
+               |        @findOne < query={ "_id" : @} >
                |        subject
                |      ]
                |    ]

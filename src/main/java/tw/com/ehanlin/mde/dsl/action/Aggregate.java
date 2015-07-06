@@ -15,29 +15,32 @@ import java.util.Map;
 
 public class Aggregate extends DbAction {
 
+    public static final String KEY_PIPELINES = "pipelines";
+
     public Aggregate(Scope scope, MdeDBObject infos) {
         super(scope, infos);
-        _pipelines = (MdeDBList)infos.get("pipelines");
     }
 
-    public MdeDBList pipelines() {
-        return _pipelines;
+    public BasicDBList pipelines(DataStack data) {
+        return (BasicDBList)evalInfo(KEY_PIPELINES, data);
     }
 
     @Override
     public String toString() {
-        return toString("aggregate", "db", db(), "coll", coll(), "pipelines", pipelines());
+        return toString("aggregate",
+                KEY_DB, infos().get(KEY_DB),
+                KEY_COLL, infos().get(KEY_COLL),
+                KEY_PIPELINES, infos().get(KEY_PIPELINES));
     }
 
     @Override
     protected String cacheKey(DataStack data, String prefix) {
-        BasicDBList pipes = (BasicDBList)AtEvaluator.eval(data, pipelines());
-        return prefix+pipes.toString();
+        return prefix+pipelines(data);
     }
 
     @Override
     protected Object executeObject(DataStack data, DBCollection coll) {
-        BasicDBList pipes = (BasicDBList)AtEvaluator.eval(data, pipelines());
+        BasicDBList pipes = pipelines(data);
         List<DBObject> pipeList = new ArrayList();
         pipes.forEach(item -> pipeList.add((DBObject)item));
         BasicDBList result = new BasicDBList();
@@ -45,5 +48,4 @@ public class Aggregate extends DbAction {
         return result;
     }
 
-    private MdeDBList _pipelines;
 }

@@ -1,6 +1,8 @@
 package tw.com.ehanlin.mde.dsl;
 
 import com.mongodb.*;
+import tw.com.ehanlin.mde.dsl.mongo.At;
+import tw.com.ehanlin.mde.dsl.mongo.AtEvaluator;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 import tw.com.ehanlin.mde.util.ConcurrentCache;
 import tw.com.ehanlin.mde.util.DataStack;
@@ -21,6 +23,7 @@ public abstract class Action {
 
     public Action(Scope scope, MdeDBObject infos) {
         _scope = scope;
+        _infos = infos;
     }
 
     public Scope scope() {
@@ -29,6 +32,14 @@ public abstract class Action {
 
     public Dsl dsl() {
         return _dsl;
+    }
+
+    public MdeDBObject infos() {
+        return _infos;
+    }
+
+    public Object evalInfo(String key, DataStack data) {
+        return AtEvaluator.eval(data, _infos.get(key));
     }
 
     public void execute(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
@@ -136,6 +147,8 @@ public abstract class Action {
     }
 
     private Scope _scope;
+
+    private MdeDBObject _infos;
 
     Dsl _dsl;
 

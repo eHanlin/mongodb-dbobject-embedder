@@ -81,9 +81,12 @@ public class DslParser {
     private List<String> actionInfoSymbols = Arrays.asList("=", ",", " ", "\b", "\f", "\t", "\r", "\n", "[", "{", ")", ">", "]");
     private List<String> mongoSymbols = Arrays.asList(":", ",", "{", "[", "]", "}");
     private Pattern propertyPattern = Pattern.compile("\\S+");
+    private Pattern nullPattern = Pattern.compile("^null$", Pattern.CASE_INSENSITIVE);
     private Pattern stringPattern = Pattern.compile("^(?:'(.*)'|\"(.*)\")$");
     private Pattern atPattern = Pattern.compile("^@.*");
-    private Pattern longPattern = Pattern.compile("^[+-]?\\d+$");
+    private Pattern intPattern = Pattern.compile("^[+-]?\\d+$");
+    private Pattern longPattern = Pattern.compile("^([+-]?\\d+)[Ll]$");
+    private Pattern floatPattern = Pattern.compile("^([+-]?\\d*\\.?\\d*)[Ff]$");
     private Pattern doublePattern = Pattern.compile("^[+-]?\\d*\\.\\d+$");
     private Pattern booleanPattern = Pattern.compile("^(true|false)$", Pattern.CASE_INSENSITIVE);
 
@@ -133,18 +136,12 @@ public class DslParser {
 
     private Object parseMongoContent(String content) {
 
-        Matcher stringMatcher = stringPattern.matcher(content);
-        if(stringMatcher.matches()){
-            String result = stringMatcher.group(1);
-            return (result != null) ? result : stringMatcher.group(2);
-        }
-
         if(atPattern.matcher(content).matches()){
             return new At(content);
         }
 
-        if(longPattern.matcher(content).matches()){
-            return Long.parseLong(content);
+        if(intPattern.matcher(content).matches()){
+            return Integer.parseInt(content);
         }
 
         if(doublePattern.matcher(content).matches()){
@@ -154,6 +151,26 @@ public class DslParser {
         Matcher booleanMatcher = booleanPattern.matcher(content);
         if(booleanMatcher.matches()){
             return booleanMatcher.group(0).toLowerCase().equals("true");
+        }
+
+        Matcher floatMatcher = floatPattern.matcher(content);
+        if(floatMatcher.matches()){
+            return Float.parseFloat(floatMatcher.group(1));
+        }
+
+        Matcher longMatcher = longPattern.matcher(content);
+        if(longMatcher.matches()){
+            return Long.parseLong(longMatcher.group(1));
+        }
+
+        if(nullPattern.matcher(content).matches()){
+            return null;
+        }
+
+        Matcher stringMatcher = stringPattern.matcher(content);
+        if(stringMatcher.matches()){
+            String result = stringMatcher.group(1);
+            return (result != null) ? result : stringMatcher.group(2);
         }
 
         return content;
@@ -267,8 +284,11 @@ public class DslParser {
                 case "\n" :
                 case "," : {
                     String value = matcher.prefix().trim();
-                    if (currentKey != null && value.length() > 0) {
-                        result.append(currentKey, value);
+                    if (currentKey != null) {
+                        if(value.length() > 0)
+                            result.append(currentKey, parseMongoContent(value));
+                        else
+                            result.append(currentKey, null);
                         currentKey = null;
                     }
                     break;
@@ -290,7 +310,10 @@ public class DslParser {
                 case "]" : {
                     String value = matcher.prefix().trim();
                     if (currentKey != null && value.length() > 0) {
-                        result.append(currentKey, value);
+                        if(value.length() > 0)
+                            result.append(currentKey, parseMongoContent(value));
+                        else
+                            result.append(currentKey, null);
                     }
                     return result;
                 }

@@ -10,30 +10,33 @@ import tw.com.ehanlin.mde.util.EmptyObject;
 
 public class Count extends DbAction {
 
+    public static final String KEY_QUERY = "query";
+
     public Count(Scope scope, MdeDBObject infos) {
         super(scope, infos);
-        MdeDBObject query = (MdeDBObject)infos.get("query");
-        _query = (query != null) ? query : EmptyObject.MdeDBObject;
     }
 
-    public MdeDBObject query() {
-        return (_query.isEmpty()) ? _query : (MdeDBObject)_query.copy();
+    public DBObject query(DataStack data) {
+        Object _query = evalInfo(KEY_QUERY, data);
+        return (DBObject)((_query != null) ? _query : EmptyObject.BasicDBObject);
     }
 
     @Override
     public String toString() {
-        return toString("count", "db", db(), "coll", coll(), "query", query());
+        return toString("count",
+            KEY_DB, infos().get(KEY_DB),
+            KEY_COLL, infos().get(KEY_COLL),
+            KEY_QUERY, infos().get(KEY_QUERY));
     }
 
     @Override
     protected String cacheKey(DataStack data, String prefix) {
-        return prefix+AtEvaluator.eval(data, query()).toString();
+        return prefix+query(data);
     }
 
     @Override
     protected Object executeObject(DataStack data, DBCollection coll) {
-        return coll.count(AtEvaluator.eval(data, query()));
+        return coll.count(query(data));
     }
 
-    private MdeDBObject _query;
 }

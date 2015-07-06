@@ -11,86 +11,80 @@ import tw.com.ehanlin.mde.util.EmptyObject;
 
 import java.util.ArrayList;
 
-public class Find extends Count {
+public class Find extends FindOne {
+
+    public static final String KEY_SORT = "sort";
+    public static final String KEY_SKIP = "skip";
+    public static final String KEY_LIMIT = "limit";
 
     public Find(Scope scope, MdeDBObject infos) {
         super(scope, infos);
-
-        MdeDBObject projection = (MdeDBObject)infos.get("projection");
-        _projection = (projection != null) ? projection : EmptyObject.MdeDBObject;
-
-        _sort = (MdeDBObject)infos.get("sort");
-
-        Object skip = infos.get("skip");
-        if(skip != null){
-            _skip = Integer.parseInt(skip.toString());
-        }
-
-        Object limit = infos.get("limit");
-        if(limit != null){
-            _limit = Integer.parseInt(limit.toString());
-        }
     }
 
-    public MdeDBObject projection() {
-        return (_projection.isEmpty()) ? _projection : (MdeDBObject)_projection.copy();
+    public DBObject projection(DataStack data) {
+        Object _projection = evalInfo(KEY_PROJECTION, data);
+        return (DBObject)((_projection != null) ? _projection : EmptyObject.BasicDBObject);
     }
 
-    public MdeDBObject sort() {
-        return _sort;
+    public DBObject sort(DataStack data) {
+        Object _sort = evalInfo(KEY_SORT, data);
+        return (DBObject)((_sort != null) ? _sort : EmptyObject.BasicDBObject);
     }
 
-    public Integer skip() {
-        return _skip;
+    public Integer skip(DataStack data) {
+        return (Integer) evalInfo(KEY_SKIP, data);
     }
 
-    public Integer limit() {
-        return _limit;
+    public Integer limit(DataStack data) {
+        return (Integer) evalInfo(KEY_LIMIT, data);
     }
 
     @Override
     public String toString() {
         ArrayList list = new ArrayList();
-        list.add("db");
-        list.add(db());
-        list.add("coll");
-        list.add(coll());
-        list.add("query");
-        list.add(query());
-        list.add("projection");
-        list.add(projection());
-        if(sort() != null){
-            list.add("sort");
-            list.add(sort());
+        list.add(KEY_DB); list.add(infos().get(KEY_DB));
+        list.add(KEY_COLL); list.add(infos().get(KEY_COLL));
+        list.add(KEY_QUERY); list.add(infos().get(KEY_QUERY));
+
+        if(infos().get(KEY_PROJECTION) != null){
+            list.add(KEY_PROJECTION); list.add(infos().get(KEY_PROJECTION));
         }
-        if(skip() != null){
-            list.add("skip");
-            list.add(skip());
+
+        if(infos().get(KEY_SORT) != null){
+            list.add(KEY_SORT); list.add(infos().get(KEY_SORT));
         }
-        if(limit() != null){
-            list.add("limit");
-            list.add(limit());
+
+        if(infos().get(KEY_SKIP) != null){
+            list.add(KEY_SKIP); list.add(infos().get(KEY_SKIP));
         }
+
+        if(infos().get(KEY_LIMIT) != null){
+            list.add(KEY_LIMIT); list.add(infos().get(KEY_LIMIT));
+        }
+
         return toString("find", list.toArray());
     }
 
     @Override
     protected String cacheKey(DataStack data, String prefix) {
-        return prefix+AtEvaluator.eval(data, query()).toString()+"_"+AtEvaluator.eval(data, projection()).toString();
+        return super.cacheKey(data, prefix)+"_"+
+            sort(data)+"_"+
+            skip(data)+"_"+
+            limit(data);
     }
 
     @Override
     protected Object executeObject(DataStack data, DBCollection coll) {
         BasicDBList result = new BasicDBList();
-        DBCursor cursor = coll.find(AtEvaluator.eval(data, query()), AtEvaluator.eval(data, projection()));
-        if(sort() != null){
-            cursor.sort(sort());
+        DBCursor cursor = coll.find(query(data), projection(data));
+        if(infos().get(KEY_SORT) != null){
+            cursor.sort(sort(data));
         }
-        if(skip() != null){
-            cursor.skip(skip());
+        if(infos().get(KEY_SKIP) != null){
+            cursor.skip(skip(data));
         }
-        if(limit() != null){
-            cursor.limit(limit());
+        if(infos().get(KEY_LIMIT) != null){
+            cursor.limit(limit(data));
         }
         while(cursor.hasNext()){
             result.add(cursor.next());
@@ -98,10 +92,5 @@ public class Find extends Count {
         cursor.close();
         return result;
     }
-
-    private MdeDBObject _projection;
-    private MdeDBObject _sort;
-    private Integer _skip;
-    private Integer _limit;
 
 }
