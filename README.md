@@ -99,7 +99,7 @@
   <dependency>
     <groupId>tw.com.ehanlin</groupId>
     <artifactId>mongodb-dbobject-embedder</artifactId>
-    <version>0.0.7</version>
+    <version>0.0.8</version>
   </dependency>
 </dependencies>
 ```
@@ -109,7 +109,7 @@
 ```
 resolvers += "mongodb-dbobject-embedder" at "http://dl.bintray.com/hotdog929/maven"
 libraryDependencies ++= Seq(
-  "tw.com.ehanlin" % "mongodb-dbobject-embedder" % "0.0.7"
+  "tw.com.ehanlin" % "mongodb-dbobject-embedder" % "0.0.8"
 )
 ```
 
@@ -122,7 +122,7 @@ repositories {
     }
 }
 dependencies {
-    compile 'tw.com.ehanlin:mongodb-dbobject-embedder:0.0.7'
+    compile 'tw.com.ehanlin:mongodb-dbobject-embedder:0.0.8'
 }
 ```
 
@@ -130,7 +130,7 @@ dependencies {
 
 ```
 @GrabResolver(name='mongodb-dbobject-embedder', root='http://dl.bintray.com/hotdog929/maven')
-@Grab('tw.com.ehanlin:mongodb-dbobject-embedder:0.0.7')
+@Grab('tw.com.ehanlin:mongodb-dbobject-embedder:0.0.8')
 ```
 
 ## 使用方式
