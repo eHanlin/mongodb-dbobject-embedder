@@ -26,6 +26,7 @@ public class DslParser {
         registerAction("distinct", Distinct.class);
         registerAction("count", Count.class);
         registerAction("aggregate", Aggregate.class);
+        registerAction("fill", Fill.class);
     }
 
     public void registerAction(String key, Class<? extends Action> type) {

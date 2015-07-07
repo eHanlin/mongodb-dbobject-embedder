@@ -7,15 +7,13 @@ import tw.com.ehanlin.mde.util.DataStack;
 
 import java.util.Map;
 
-public class DataAction extends Action {
+public abstract class DataAction extends Action {
 
     public DataAction (Scope scope, MdeDBObject infos) {
         super(scope, infos);
     }
 
     @Override
-    protected Object executeObjectWithCache(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
-        return null;
-    }
+    protected abstract Object executeObjectWithCache(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel);
 
 }
