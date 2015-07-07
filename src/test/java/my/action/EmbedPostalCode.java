@@ -1,7 +1,7 @@
 package my.action;
 
 import tw.com.ehanlin.mde.dsl.Dsl;
-import tw.com.ehanlin.mde.dsl.action.DslAction;
+import tw.com.ehanlin.mde.dsl.action.data.DslAction;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 
 public class EmbedPostalCode extends DslAction {

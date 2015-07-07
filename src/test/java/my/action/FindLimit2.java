@@ -4,7 +4,7 @@ import com.mongodb.BasicDBList;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import tw.com.ehanlin.mde.dsl.action.DbAction;
+import tw.com.ehanlin.mde.dsl.action.db.DbAction;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 import tw.com.ehanlin.mde.util.DataStack;
 import tw.com.ehanlin.mde.util.EmptyObject;

@@ -521,7 +521,7 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 package my.action;
 
 import tw.com.ehanlin.mde.dsl.Dsl;
-import tw.com.ehanlin.mde.dsl.action.DslAction;
+import tw.com.ehanlin.mde.dsl.action.data.DslAction;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 
 public class EmbedPostalCode extends DslAction {
@@ -632,7 +632,7 @@ import com.mongodb.BasicDBList;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import tw.com.ehanlin.mde.dsl.action.DbAction;
+import tw.com.ehanlin.mde.dsl.action.db.DbAction;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBObject;
 import tw.com.ehanlin.mde.util.DataStack;
 import tw.com.ehanlin.mde.util.EmptyObject;
