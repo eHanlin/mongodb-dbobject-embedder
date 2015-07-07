@@ -1,6 +1,6 @@
 package tw.com.ehanlin.mde.dsl;
 
-import tw.com.ehanlin.mde.dsl.action.data.Fill;
+import tw.com.ehanlin.mde.dsl.action.data.*;
 import tw.com.ehanlin.mde.dsl.action.db.*;
 import tw.com.ehanlin.mde.dsl.mongo.At;
 import tw.com.ehanlin.mde.dsl.mongo.MdeDBList;
@@ -28,6 +28,7 @@ public class DslParser {
         registerAction("count", Count.class);
         registerAction("aggregate", Aggregate.class);
         registerAction("fill", Fill.class);
+        registerAction("findFirstOne", FindFirstOne.class);
     }
 
     public void registerAction(String key, Class<? extends Action> type) {
