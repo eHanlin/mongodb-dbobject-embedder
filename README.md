@@ -99,7 +99,7 @@
   <dependency>
     <groupId>tw.com.ehanlin</groupId>
     <artifactId>mongodb-dbobject-embedder</artifactId>
-    <version>0.0.8</version>
+    <version>0.0.9</version>
   </dependency>
 </dependencies>
 ```
@@ -109,7 +109,7 @@
 ```
 resolvers += "mongodb-dbobject-embedder" at "http://dl.bintray.com/hotdog929/maven"
 libraryDependencies ++= Seq(
-  "tw.com.ehanlin" % "mongodb-dbobject-embedder" % "0.0.8"
+  "tw.com.ehanlin" % "mongodb-dbobject-embedder" % "0.0.9"
 )
 ```
 
@@ -122,7 +122,7 @@ repositories {
     }
 }
 dependencies {
-    compile 'tw.com.ehanlin:mongodb-dbobject-embedder:0.0.8'
+    compile 'tw.com.ehanlin:mongodb-dbobject-embedder:0.0.9'
 }
 ```
 
@@ -130,7 +130,7 @@ dependencies {
 
 ```
 @GrabResolver(name='mongodb-dbobject-embedder', root='http://dl.bintray.com/hotdog929/maven')
-@Grab('tw.com.ehanlin:mongodb-dbobject-embedder:0.0.8')
+@Grab('tw.com.ehanlin:mongodb-dbobject-embedder:0.0.9')
 ```
 
 ## 使用方式
@@ -466,6 +466,8 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
 
 
 ### 目前支援的 Action
+
+#### DB Action
 * @find
   * db
   * coll
@@ -508,6 +510,19 @@ MongoEmbedder.instance.embed(null, "@find <db=user coll=user query={ height : { 
   * index
   * pipelines
 
+* @findFirstOne
+  * db
+  * coll
+  * index
+  * projection
+  * query
+  * sort
+  * skip
+  
+#### Data Action
+  
+* @fill
+  * value
 
 ### 使用自訂 Action
 >主要有二種方法可以選擇
