@@ -61,10 +61,7 @@ public abstract class Action {
     }
 
 
-
-    protected abstract String cacheKey(DataStack data);
-
-    protected abstract Object executeObject(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel);
+    protected abstract Object executeObjectWithCache(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel);
 
     protected String toString(String name, Object... args) {
         StringBuilder result = new StringBuilder("@");
@@ -88,7 +85,6 @@ public abstract class Action {
         }
         return result.toString();
     }
-
 
 
     private void excuteListData(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
@@ -123,16 +119,6 @@ public abstract class Action {
             return list;
         }
         return source;
-    }
-
-    private Object executeObjectWithCache(DataStack data, Map<String, DB> dbMap, Map<String, Object> cache, Boolean parallel) {
-        String key = cacheKey(data);
-        if(!cache.containsKey(key)){
-            Object result = executeObject(data, dbMap, cache, parallel);
-            cache.put(key, (result != null) ? result : EmptyObject.Null);
-        }
-        Object result = cache.get(key);
-        return (result != EmptyObject.Null) ? result : null;
     }
 
     private void appendInfo(StringBuilder result, Object[] args) {
